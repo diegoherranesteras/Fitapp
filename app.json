@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "rutina-app",
+    "name": "Rutina",
     "slug": "rutina-app",
+    "scheme": "rutinaapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#22100F",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#22100F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -20,6 +22,13 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "splash": {
+      "backgroundColor": "#22100F"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ]
   }
 }
