@@ -1,5 +1,28 @@
 export type BlockCategory = 'meal' | 'train' | 'rest';
 
+export type Goal = 'muscle' | 'fat_loss' | 'performance' | 'maintain';
+export type Sex = 'male' | 'female';
+export type Level = 'beginner' | 'intermediate' | 'advanced';
+export type DailyActivity = 'sedentary' | 'light' | 'active';
+
+export interface OnboardingAnswers {
+  sex: Sex;
+  age: number;
+  height_cm: number;
+  weight_kg: number;
+  body_fat_pct: number | null;
+  goal: Goal;
+  // kg por semana, siempre positivo; el signo lo da el objetivo. 0 si mantener o rendimiento.
+  weekly_rate_kg: number;
+  daily_activity: DailyActivity;
+  gym_days: number;
+  training_time: string; // "HH:MM", hora fija de inicio del entreno
+  session_minutes: number;
+  level: Level;
+  wake_time: string;
+  sleep_time: string;
+}
+
 export interface RoutineDay {
   id: string;
   user_id: string;
@@ -58,6 +81,12 @@ export interface MacroTargets {
   iron_mg: number;
   vitamin_d_mcg: number;
 }
+
+// Recomendación calculada al generar el plan (supabase/functions/generate-plan): se muestra al editar.
+export type MacroReference = Omit<MacroTargets, 'user_id'> & {
+  maintenance_calories: number;
+  why: string[];
+};
 
 export interface FoodLog {
   id: string;

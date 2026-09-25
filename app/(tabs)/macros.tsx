@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth-context';
 import { colors, fonts } from '../../lib/theme';
-import type { FoodLog, MacroTargets } from '../../lib/types';
+import type { FoodLog, MacroReference, MacroTargets } from '../../lib/types';
 import RingProgress from '../../components/RingProgress';
 import EditMacrosModal from '../../components/EditMacrosModal';
 
@@ -35,6 +35,7 @@ export default function MacrosScreen() {
   const dates = last7Dates();
   const [selectedDate, setSelectedDate] = useState(dates[dates.length - 1].iso);
   const [targets, setTargets] = useState<MacroTargets | null>(null);
+  const [reference, setReference] = useState<MacroReference | null>(null);
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
@@ -42,7 +43,7 @@ export default function MacrosScreen() {
   const load = useCallback(async () => {
     if (!session) return;
     setLoading(true);
-    const [{ data: t }, { data: l }] = await Promise.all([
+    const [{ data: t }, { data: l }, { data: p }] = await Promise.all([
       supabase.from('macro_targets').select('*').eq('user_id', session.user.id).maybeSingle(),
       supabase
         .from('food_logs')
@@ -50,9 +51,11 @@ export default function MacrosScreen() {
         .eq('user_id', session.user.id)
         .eq('date', selectedDate)
         .order('logged_at', { ascending: false }),
+      supabase.from('profiles').select('macro_reference').eq('user_id', session.user.id).maybeSingle(),
     ]);
     setTargets(t as MacroTargets | null);
     setLogs((l as FoodLog[]) ?? []);
+    setReference((p?.macro_reference as MacroReference | null) ?? null);
     setLoading(false);
   }, [session, selectedDate]);
 
@@ -173,6 +176,7 @@ export default function MacrosScreen() {
         onClose={() => setEditOpen(false)}
         userId={session?.user.id ?? ''}
         current={targets}
+        reference={reference}
         onSaved={setTargets}
       />
     </SafeAreaView>

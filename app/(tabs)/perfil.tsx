@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth-context';
@@ -8,6 +8,7 @@ import { colors, fonts } from '../../lib/theme';
 
 export default function PerfilScreen() {
   const { session } = useAuth();
+  const router = useRouter();
   const [name, setName] = useState('');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lb'>('kg');
   const [loading, setLoading] = useState(true);
@@ -73,6 +74,11 @@ export default function PerfilScreen() {
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>{saved ? 'Guardado ✓' : 'Guardar'}</Text>}
         </Pressable>
 
+        <Pressable style={styles.redoButton} onPress={() => router.push('/onboarding')}>
+          <Text style={styles.redoText}>Rehacer mi plan</Text>
+          <Text style={styles.redoHint}>Vuelve a responder el cuestionario y la IA te genera una semana nueva.</Text>
+        </Pressable>
+
         <Pressable style={styles.signOutButton} onPress={() => supabase.auth.signOut()}>
           <Text style={styles.signOutText}>Cerrar sesión</Text>
         </Pressable>
@@ -106,6 +112,17 @@ const styles = StyleSheet.create({
   unitTextActive: { color: colors.bg },
   saveButton: { backgroundColor: colors.brass, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
   saveText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.bg },
+  redoButton: {
+    marginTop: 28,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 12,
+    padding: 16,
+    gap: 4,
+  },
+  redoText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.brassBright },
+  redoHint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.boneFaint, lineHeight: 18 },
   signOutButton: { marginTop: 28, alignItems: 'center' },
   signOutText: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.bloodBright },
 });
