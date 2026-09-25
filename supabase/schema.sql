@@ -154,16 +154,20 @@ create policy "own meal_items" on meal_items for all
   with check (routine_block_id in (select b.id from routine_blocks b join routine_days d on d.id = b.routine_day_id where d.user_id = auth.uid()));
 
 -- Crea el perfil y los objetivos de macros automáticamente al registrarse.
-create or replace function handle_new_user()
-returns trigger as $$
+-- Se ejecuta con el rol de Supabase Auth, cuyo search_path no incluye public: hay que cualificar las tablas.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
 begin
-  insert into profiles (user_id) values (new.id);
-  insert into macro_targets (user_id) values (new.id);
+  insert into public.profiles (user_id) values (new.id);
+  insert into public.macro_targets (user_id) values (new.id);
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute procedure handle_new_user();
+  for each row execute procedure public.handle_new_user();

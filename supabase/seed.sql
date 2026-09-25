@@ -1,14 +1,21 @@
 -- Rellena la app con la rutina de boxeo/gym y las comidas que ya tenías en la web.
--- 1) Regístrate una vez en la app (o en Authentication > Users del panel de Supabase).
--- 2) Copia tu User UID desde Authentication > Users.
--- 3) Pega ese UID abajo en v_user_id y ejecuta este script entero en el SQL Editor.
+-- 1) Regístrate una vez en la app.
+-- 2) Pon tu email abajo en v_email y ejecuta este script entero en el SQL Editor.
+-- Se puede re-ejecutar: borra primero la rutina anterior de ese usuario.
 
 do $$
 declare
-  v_user_id uuid := 'REPLACE_WITH_YOUR_USER_ID'; -- <-- cambia esto
+  v_email text := 'TU_EMAIL_AQUI'; -- <-- cambia esto
+  v_user_id uuid;
   d_id uuid;
   b_id uuid;
 begin
+  select id into v_user_id from auth.users where email = v_email;
+  if v_user_id is null then
+    raise exception 'No hay ningún usuario registrado con el email %', v_email;
+  end if;
+
+  delete from public.routine_days where user_id = v_user_id;
 
   -- ══════════════════════ LUNES — Pierna · Gym ══════════════════════
   insert into routine_days (user_id, day_of_week, label, accent_color)
