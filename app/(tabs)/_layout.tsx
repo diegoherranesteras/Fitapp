@@ -44,7 +44,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="perfil" options={{ tabBarIcon: ({ focused }) => <TabIcon label="PERFIL" focused={focused} /> }} />
       </Tabs>
 
-      <View style={[styles.fabWrap, { bottom: 30 + insets.bottom }]} pointerEvents="box-none">
+      <View style={[styles.fabWrap, { bottom: 30 + insets.bottom }]}>
         <View style={styles.fabRing}>
           <PressableScale style={styles.fab} onPress={() => setAddOpen(true)} accessibilityLabel="Registrar comida o peso">
             <Text style={styles.fabPlus}>+</Text>
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   tabIndicatorActive: { backgroundColor: neon.line, ...glow(8, 0.9) },
   tabLabel: { fontSize: 11, fontFamily: fonts.mono, color: colors.boneFaint },
   tabLabelActive: { color: neon.bright },
-  fabWrap: { position: 'absolute', alignSelf: 'center' },
+  fabWrap: { position: 'absolute', alignSelf: 'center', pointerEvents: 'box-none' },
   fabRing: {
     padding: 4,
     borderRadius: 36,

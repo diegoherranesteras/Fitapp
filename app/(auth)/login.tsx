@@ -45,7 +45,7 @@ export default function LoginScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.decor} pointerEvents="none">
+      <View style={styles.decor}>
         <View style={[styles.tube, { top: 38, left: -20, width: 150 }]} />
         <View style={[styles.tube, { top: 38, right: -20, width: 150 }]} />
         <View style={[styles.tube, styles.tubeFaint, { bottom: 70, left: 40, right: 40 }]} />
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   titleLine: { height: 2, width: 96, borderRadius: 1, backgroundColor: neon.line, marginTop: 8, marginBottom: 32, ...glow(10, 0.9) },
-  decor: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' },
+  decor: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' },
   tube: { position: 'absolute', height: 3, borderRadius: 2, backgroundColor: neon.bright, opacity: 0.9, ...glow(22, 0.9) },
   tubeFaint: { height: 2, opacity: 0.3 },
   inputFocused: { borderColor: neon.line, ...glow(10, 0.4) },
