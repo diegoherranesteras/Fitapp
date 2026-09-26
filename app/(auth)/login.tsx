@@ -11,10 +11,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { colors, fonts } from '../../lib/theme';
+import { colors, fonts, glow, neon } from '../../lib/theme';
+import PressableScale from '../../components/PressableScale';
 
 export default function LoginScreen() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [focused, setFocused] = useState<'email' | 'password' | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -43,14 +45,22 @@ export default function LoginScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <View style={styles.decor} pointerEvents="none">
+        <View style={[styles.tube, { top: 38, left: -20, width: 150 }]} />
+        <View style={[styles.tube, { top: 38, right: -20, width: 150 }]} />
+        <View style={[styles.tube, styles.tubeFaint, { bottom: 70, left: 40, right: 40 }]} />
+      </View>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.eyebrow}>Rutina</Text>
         <Text style={styles.title}>{mode === 'login' ? 'Entrar' : 'Crear cuenta'}</Text>
+        <View style={styles.titleLine} />
 
         <View style={styles.field}>
           <Text style={styles.label}>Email</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, focused === 'email' && styles.inputFocused]}
+            onFocus={() => setFocused('email')}
+            onBlur={() => setFocused(null)}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -64,7 +74,9 @@ export default function LoginScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>Contraseña</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, focused === 'password' && styles.inputFocused]}
+            onFocus={() => setFocused('password')}
+            onBlur={() => setFocused(null)}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -75,13 +87,13 @@ export default function LoginScreen() {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Pressable style={styles.button} onPress={submit} disabled={busy}>
+        <PressableScale style={styles.button} onPress={submit} disabled={busy}>
           {busy ? (
             <ActivityIndicator color={colors.bg} />
           ) : (
             <Text style={styles.buttonText}>{mode === 'login' ? 'Entrar' : 'Crear cuenta'}</Text>
           )}
-        </Pressable>
+        </PressableScale>
 
         <Pressable onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
           <Text style={styles.switchText}>
@@ -109,8 +121,12 @@ const styles = StyleSheet.create({
     fontSize: 40,
     color: colors.bone,
     textTransform: 'uppercase',
-    marginBottom: 32,
   },
+  titleLine: { height: 2, width: 96, borderRadius: 1, backgroundColor: neon.line, marginTop: 8, marginBottom: 32, ...glow(10, 0.9) },
+  decor: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' },
+  tube: { position: 'absolute', height: 3, borderRadius: 2, backgroundColor: neon.bright, opacity: 0.9, ...glow(22, 0.9) },
+  tubeFaint: { height: 2, opacity: 0.3 },
+  inputFocused: { borderColor: neon.line, ...glow(10, 0.4) },
   field: { marginBottom: 18 },
   label: {
     fontFamily: fonts.mono,

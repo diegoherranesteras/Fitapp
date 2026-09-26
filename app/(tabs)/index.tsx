@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth-context';
-import { colors, fonts, dayAccents, dayLabels } from '../../lib/theme';
+import { colors, fonts, dayAccents, dayLabels, glow, neon } from '../../lib/theme';
 import type { Exercise, MealItem, RoutineBlock, RoutineDay } from '../../lib/types';
 import ExerciseSheet from '../../components/ExerciseSheet';
 
@@ -62,12 +62,8 @@ export default function RutinaScreen() {
         {WEEK_ORDER.map((dow) => {
           const active = dow === selectedDow;
           return (
-            <Pressable
-              key={dow}
-              onPress={() => setSelectedDow(dow)}
-              style={[styles.dayPill, active && { backgroundColor: dayAccents[dow] }]}
-            >
-              <Text style={[styles.dayPillText, active && styles.dayPillTextActive]}>{dayLabels[dow]}</Text>
+            <Pressable key={dow} onPress={() => setSelectedDow(dow)} style={[styles.dayPill, active && styles.dayPillActive]}>
+              <Text style={[styles.dayPillText, active && { color: dayAccents[dow] }]}>{dayLabels[dow]}</Text>
             </Pressable>
           );
         })}
@@ -79,7 +75,7 @@ export default function RutinaScreen() {
         </View>
       ) : !selectedDay ? (
         <View style={styles.center}>
-          <Text style={styles.emptyText}>No hay rutina cargada todavía.{'\n'}Ejecuta supabase/seed.sql para importar tu plan.</Text>
+          <Text style={styles.emptyText}>No hay rutina para este día.{'\n'}Puedes crear tu plan desde Perfil → Rehacer mi plan.</Text>
         </View>
       ) : (
         <ScrollView
@@ -92,28 +88,25 @@ export default function RutinaScreen() {
             <Text style={styles.dayType}>{selectedDay.label}</Text>
           </View>
 
-          {blocks.map((block) => {
+          {blocks.map((block, i) => {
             const tappable = block.category !== 'rest';
-            const dotColor =
-              block.category === 'meal' ? colors.brass : block.category === 'train' ? colors.blood : colors.boneFaint;
             return (
               <Pressable
                 key={block.id}
                 disabled={!tappable}
                 onPress={() => setOpenBlock(block)}
-                style={styles.item}
+                style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
               >
                 <Text style={styles.itemTime}>{block.time}</Text>
-                <View style={styles.itemLabWrap}>
-                  <View style={[styles.dot, { backgroundColor: dotColor }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.itemTitle, block.category === 'train' && { color: colors.bloodBright }]}>
-                      {block.title}
-                    </Text>
-                    {block.subtitle ? <Text style={styles.itemSubtitle}>{block.subtitle}</Text> : null}
-                  </View>
-                  {tappable ? <Text style={styles.chevron}>›</Text> : null}
+                <View style={styles.rail}>
+                  <View style={[styles.railLine, i === 0 && styles.railLineFirst, i === blocks.length - 1 && styles.railLineLast]} />
+                  <View style={[styles.dot, DOTS[block.category]]} />
                 </View>
+                <View style={styles.itemBody}>
+                  <Text style={[styles.itemTitle, block.category === 'train' && { color: colors.bloodBright }]}>{block.title}</Text>
+                  {block.subtitle ? <Text style={styles.itemSubtitle}>{block.subtitle}</Text> : null}
+                </View>
+                {tappable ? <Text style={styles.chevron}>›</Text> : null}
               </Pressable>
             );
           })}
@@ -150,18 +143,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
   },
+  dayPillActive: { backgroundColor: colors.surface2, borderColor: neon.line, ...glow(10, 0.55) },
   dayPillText: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.boneDim },
-  dayPillTextActive: { color: colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30 },
   emptyText: { color: colors.boneDim, fontFamily: fonts.body, textAlign: 'center', lineHeight: 20 },
   dayHeader: { borderBottomWidth: 2, paddingBottom: 10, marginBottom: 6 },
   dayName: { fontFamily: fonts.display, fontSize: 26, textTransform: 'uppercase' },
   dayType: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: colors.boneFaint, marginTop: 3 },
-  item: { paddingVertical: 9, borderTopWidth: 1, borderTopColor: colors.line, flexDirection: 'row', gap: 10 },
-  itemTime: { fontFamily: fonts.mono, fontSize: 12, color: colors.boneFaint, width: 42, paddingTop: 2 },
-  itemLabWrap: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  dot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
+  // Sin padding vertical en la fila: así la línea de cada fila empalma con la siguiente sin cortes.
+  item: { flexDirection: 'row', gap: 10, borderRadius: 8 },
+  itemPressed: { backgroundColor: 'rgba(242,232,219,0.04)' },
+  itemTime: { fontFamily: fonts.mono, fontSize: 12, color: colors.boneFaint, width: 42, paddingVertical: 12 },
+  rail: { width: 12, alignItems: 'center' },
+  railLine: { position: 'absolute', top: 0, bottom: 0, width: 2, borderRadius: 1, backgroundColor: neon.soft, ...glow(6, 0.6) },
+  railLineFirst: { top: 18 },
+  railLineLast: { bottom: undefined, height: 18 },
+  dot: { width: 10, height: 10, borderRadius: 5, marginTop: 14, borderWidth: 2, borderColor: colors.bg },
+  itemBody: { flex: 1, paddingVertical: 10 },
   itemTitle: { fontFamily: fonts.bodyBold, fontSize: 14.5, color: colors.bone },
   itemSubtitle: { fontFamily: fonts.body, fontSize: 12.5, color: colors.boneDim, marginTop: 1 },
-  chevron: { color: colors.boneFaint, fontSize: 18, marginTop: 2 },
+  chevron: { color: colors.boneFaint, fontSize: 18, paddingVertical: 10, paddingRight: 4 },
 });
+
+const DOTS = {
+  meal: { backgroundColor: colors.brass, ...glow(8, 0.7, '207,166,78') },
+  train: { backgroundColor: colors.blood, ...glow(8, 0.8, '218,64,48') },
+  rest: { backgroundColor: colors.boneFaint },
+};

@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth-context';
-import { colors, fonts } from '../lib/theme';
+import { colors, fonts, glow, neon } from '../lib/theme';
 import { computeMacros, goalHasRate, rateFeedback, recommendedRate, type RateLevel } from '../lib/nutrition';
 import { buildDefaultPlan } from '../lib/default-plan';
 import type { DailyActivity, Goal, Level, OnboardingAnswers, Sex } from '../lib/types';
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   content: { padding: 22, paddingBottom: 40 },
   progressWrap: { flexDirection: 'row', gap: 6, paddingHorizontal: 22, paddingTop: 10 },
   progressBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.surface2 },
-  progressBarActive: { backgroundColor: colors.brass },
+  progressBarActive: { backgroundColor: neon.line, ...glow(8, 0.7) },
   eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: colors.brass, marginTop: 8 },
   title: { fontFamily: fonts.display, fontSize: 34, color: colors.bone, textTransform: 'uppercase', marginTop: 6, marginBottom: 8 },
   label: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.bone, marginTop: 20, marginBottom: 10 },

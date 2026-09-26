@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
-import { colors, fonts } from '../lib/theme';
+import { colors, fonts, neon } from '../lib/theme';
 import type { WeightLog } from '../lib/types';
 
 interface Props {
@@ -36,9 +36,11 @@ export default function WeightChart({ logs, width, height }: Props) {
     <View>
       <Svg width={width} height={height}>
         <Line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke={colors.line} strokeWidth={1} />
-        <Polyline points={polylinePoints} fill="none" stroke={colors.brassBright} strokeWidth={2.5} />
+        {/* Dos trazos: uno ancho y tenue que hace de halo, y el fino encima: efecto tubo de neón. */}
+        <Polyline points={polylinePoints} fill="none" stroke={neon.line} strokeOpacity={0.25} strokeWidth={8} strokeLinejoin="round" strokeLinecap="round" />
+        <Polyline points={polylinePoints} fill="none" stroke={neon.bright} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
         {points.map((p, i) => (
-          <Circle key={i} cx={p.x} cy={p.y} r={3.5} fill={colors.brassBright} />
+          <Circle key={i} cx={p.x} cy={p.y} r={3.5} fill={neon.bright} />
         ))}
       </Svg>
       <View style={styles.legendRow}>

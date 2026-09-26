@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth-context';
-import { colors, fonts } from '../../lib/theme';
+import { colors, fonts, glow, neon } from '../../lib/theme';
 import type { FoodLog, MacroReference, MacroTargets } from '../../lib/types';
 import RingProgress from '../../components/RingProgress';
 import EditMacrosModal from '../../components/EditMacrosModal';
@@ -106,7 +106,7 @@ export default function MacrosScreen() {
         </View>
 
         <View style={styles.ringSection}>
-          <RingProgress size={190} strokeWidth={14} progress={targets ? consumed.calories / targets.calories : 0} color={colors.brassBright}>
+          <RingProgress size={190} strokeWidth={14} progress={targets ? consumed.calories / targets.calories : 0} color={neon.line}>
             <Text style={styles.fire}>🔥</Text>
             <Text style={styles.ringNumber}>{Math.max(0, Math.round(calLeft))}</Text>
             <Text style={styles.ringLabel}>Calorías restantes</Text>
@@ -190,12 +190,12 @@ const styles = StyleSheet.create({
   dateItem: { alignItems: 'center', gap: 6 },
   dateDow: { fontFamily: fonts.mono, fontSize: 10, color: colors.boneFaint },
   dateCircle: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.line },
-  dateCircleActive: { backgroundColor: colors.brassBright, borderColor: colors.brassBright },
+  dateCircleActive: { backgroundColor: colors.surface2, borderColor: neon.line, ...glow(10, 0.55) },
   dateNum: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.boneDim },
-  dateNumActive: { color: colors.bg },
+  dateNumActive: { color: neon.bright },
   ringSection: { alignItems: 'center', marginTop: 26, position: 'relative' },
   fire: { fontSize: 22 },
-  ringNumber: { fontFamily: fonts.display, fontSize: 40, color: colors.brassBright, marginTop: 2 },
+  ringNumber: { fontFamily: fonts.display, fontSize: 40, color: colors.bone, marginTop: 2 },
   ringLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.boneDim, marginTop: 2 },
   editButton: { position: 'absolute', top: 0, right: 24, padding: 8 },
   editIcon: { color: colors.boneDim, fontSize: 16 },

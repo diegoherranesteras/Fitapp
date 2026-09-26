@@ -1,6 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { colors } from '../lib/theme';
+import { glow, neon } from '../lib/theme';
 
 interface Props {
   size: number;
@@ -11,23 +11,18 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export default function RingProgress({ size, strokeWidth, progress, color, trackColor = colors.surface2, children }: Props) {
+export default function RingProgress({ size, strokeWidth, progress, color, trackColor = neon.faint, children }: Props) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(1, progress));
   const offset = circumference * (1 - clamped);
 
   return (
-    <View style={{ width: size, height: size }}>
+    <View style={{ width: size, height: size, borderRadius: size / 2, ...glow(Math.round(size / 8), 0.3) }}>
       <Svg width={size} height={size}>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={trackColor}
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
+        <Circle cx={size / 2} cy={size / 2} r={radius} stroke={trackColor} strokeWidth={strokeWidth} fill="none" />
+        {/* Filo de luz exterior, como un tubo de neón */}
+        <Circle cx={size / 2} cy={size / 2} r={size / 2 - 0.75} stroke={neon.soft} strokeWidth={1} fill="none" />
         <Circle
           cx={size / 2}
           cy={size / 2}
