@@ -65,7 +65,10 @@ export function computeMacros(a: OnboardingAnswers): MacroReference {
   const bmr = leanMass != null
     ? 370 + 21.6 * leanMass
     : 10 * a.weight_kg + 6.25 * a.height_cm - 5 * a.age + (a.sex === 'male' ? 5 : -161);
-  const activity = Math.min(1.9, ACTIVITY_BASE[a.daily_activity] + 0.07 * a.gym_days);
+  // Cada día de gimnasio (~1 h) suma 0,07 al factor de actividad; el otro deporte suma por horas semanales,
+  // un poco más por hora porque suele ser más continuo (boxeo, fútbol, correr...).
+  const sportHours = a.sport ? (a.sport.days.length * a.sport.minutes) / 60 : 0;
+  const activity = Math.min(1.9, ACTIVITY_BASE[a.daily_activity] + 0.07 * a.gym_days + 0.06 * sportHours);
   const maintenance = Math.round(bmr * activity);
 
   let delta = 0;
@@ -85,7 +88,9 @@ export function computeMacros(a: OnboardingAnswers): MacroReference {
   const why: string[] = [
     `Tu gasto estimado es de unas ${fmt(maintenance)} kcal al día (${
       leanMass != null ? 'fórmula de Katch-McArdle con tu % de grasa' : 'fórmula de Mifflin-St Jeor'
-    }, ajustada a tu actividad y ${a.gym_days} días de gimnasio).`,
+    }, ajustada a tu actividad, ${a.gym_days} ${a.gym_days === 1 ? 'día' : 'días'} de gimnasio${
+      a.sport ? ` y ${fmt(sportHours, 1)} h semanales de ${a.sport.name.trim().toLowerCase()}` : ''
+    }).`,
   ];
   if (a.goal === 'muscle') {
     why.push(`Para ganar ${fmt(a.weekly_rate_kg, 2)} kg por semana comes ${fmt(delta)} kcal por encima de tu gasto.`);

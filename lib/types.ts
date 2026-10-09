@@ -5,6 +5,21 @@ export type Sex = 'male' | 'female';
 export type Level = 'beginner' | 'intermediate' | 'advanced';
 export type DailyActivity = 'sedentary' | 'light' | 'active';
 
+// Otro deporte aparte del gimnasio: mismos días y hora cada semana.
+export interface SportAnswer {
+  name: string;
+  days: number[]; // 0 = domingo ... 6 = sábado
+  start: string; // "HH:MM"
+  minutes: number;
+}
+
+// Un tramo fijo del día que no se puede mover (clase o trabajo).
+export interface Commitment {
+  day: number;
+  start: string;
+  end: string;
+}
+
 export interface OnboardingAnswers {
   sex: Sex;
   age: number;
@@ -16,11 +31,14 @@ export interface OnboardingAnswers {
   weekly_rate_kg: number;
   daily_activity: DailyActivity;
   gym_days: number;
-  training_time: string; // "HH:MM", hora fija de inicio del entreno
+  training_time: string; // "HH:MM", hora preferida de inicio del entreno; se mueve si choca con algo
   session_minutes: number;
   level: Level;
   wake_time: string;
   sleep_time: string;
+  sport: SportAnswer | null;
+  commitment_label: string; // "Clase", "Trabajo"...
+  commitments: Commitment[];
 }
 
 export interface RoutineDay {

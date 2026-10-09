@@ -1,5 +1,6 @@
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { colors, fonts } from '../../lib/theme';
+import PressableScale from '../PressableScale';
 
 interface Props {
   label: string;
@@ -9,16 +10,23 @@ interface Props {
 
 export default function Chip({ label, selected, onPress }: Props) {
   return (
-    <Pressable onPress={onPress} style={[styles.chip, selected && styles.chipSelected]}>
+    <PressableScale
+      onPress={onPress}
+      hitSlop={4}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={[styles.chip, selected && styles.chipSelected]}
+    >
       <Text style={[styles.text, selected && styles.textSelected]}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   chip: {
+    minHeight: 40,
+    justifyContent: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: colors.surface,
     borderWidth: 1,

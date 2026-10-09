@@ -4,16 +4,19 @@ import Animated from 'react-native-reanimated';
 
 interface Props extends Omit<PressableProps, 'style' | 'children'> {
   style?: StyleProp<ViewStyle>;
+  // Estilo del área pulsable exterior: para flex o márgenes que tienen que afectar al layout del padre.
+  wrapperStyle?: StyleProp<ViewStyle>;
   children: ReactNode;
 }
 
 // Feedback de pulsado: 3 % más pequeño en 120 ms con ease-out fuerte. Se pulsa decenas de veces al día,
 // así que tiene que ser casi imperceptible.
-export default function PressableScale({ style, children, hitSlop = 8, ...rest }: Props) {
+export default function PressableScale({ style, wrapperStyle, children, hitSlop = 8, ...rest }: Props) {
   const [pressed, setPressed] = useState(false);
   return (
     <Pressable
       {...rest}
+      style={wrapperStyle}
       hitSlop={hitSlop}
       pressRetentionOffset={16}
       onPressIn={(e) => {
@@ -33,7 +36,8 @@ export default function PressableScale({ style, children, hitSlop = 8, ...rest }
 const pressScale = {
   base: {
     transform: [{ scale: 1 }],
-    transitionProperty: 'transform',
+    // El color también transiciona: así un chip o una opción que se selecciona no cambia de golpe.
+    transitionProperty: ['transform', 'backgroundColor', 'borderColor'],
     transitionDuration: '120ms',
     transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)',
   },

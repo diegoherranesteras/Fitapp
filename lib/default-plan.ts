@@ -35,8 +35,6 @@ const WORKOUTS: Record<string, { title: string; exercises: Ex[] }> = {
   tironB: { title: 'Tirón B', exercises: [['Peso muerto', 3, '5'], ['Remo en polea', 4, '10-12'], ['Jalón agarre estrecho', 3, '10-12'], ['Pájaros', 3, '15'], ['Curl inclinado', 3, '12']] },
 };
 
-// Días de gimnasio repartidos para dejar descanso entre sesiones; el domingo siempre libre.
-const GYM_DAYS: Record<number, number[]> = { 1: [3], 2: [1, 4], 3: [1, 3, 5], 4: [1, 2, 4, 5], 5: [1, 2, 3, 5, 6], 6: [1, 2, 3, 4, 5, 6] };
 const SPLITS: Record<number, string[]> = {
   1: ['fullA'],
   2: ['fullA', 'fullB'],
@@ -141,132 +139,256 @@ function scaleMeal(def: MealDef, target: Macro3) {
 
 // ── Horario ──
 const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-const fromMin = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`; };
-
-type MealSlot = { meal: keyof typeof MEALS; at: number; share: number; title?: string };
-type Slot = MealSlot | { gym: true; at: number };
-
+export const fromMin = (m: number) => { const x = ((m % 1440) + 1440) % 1440; return `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`; };
 const round15 = (m: number) => Math.round(m / 15) * 15;
 
 // Todas las horas en "minutos del día de la persona": lo que cae antes de despertarse se cuenta como +24 h.
-function daySlots(gymStart: number | null, minutes: number, wake: number, sleep: number): Slot[] {
-  const latest = sleep - 45; // última comida como tarde 45 min antes de dormir
-  const mains: MealSlot[] = [
-    { meal: 'desayuno', at: wake + 30, share: 0.25 },
-    { meal: 'comida', at: Math.max(toMin('14:00'), wake + 240), share: 0.3 },
-    { meal: 'cena', at: Math.min(toMin('21:00'), latest), share: gymStart == null ? 0.3 : 0.25 },
-  ];
-
-  if (gymStart == null) {
-    const merienda: MealSlot = { meal: 'merienda', at: round15((mains[1].at + mains[2].at) / 2), share: 0.15 };
-    return [...mains, merienda];
-  }
-
-  const end = gymStart + minutes;
-
-  // 1. Ninguna comida principal justo antes o durante el entreno: se pasa a después (post-entreno),
-  //    o antes si después ya no da tiempo a comer antes de dormir.
-  for (const m of mains) {
-    if (m.at >= gymStart - 60 && m.at <= end) {
-      const title = MEALS[m.meal](0, false).title;
-      if (end + 30 <= latest) {
-        m.at = end + 30;
-        m.title = `${title} · post-entreno`;
-      } else {
-        m.at = gymStart - 120;
-        m.title = `${title} · pre-entreno`;
-      }
-    }
-  }
-  mains.sort((x, y) => x.at - y.at);
-  for (let i = 1; i < mains.length; i++) mains[i].at = Math.max(mains[i].at, mains[i - 1].at + 150);
-  for (const m of mains) m.at = round15(Math.min(m.at, latest));
-
-  const slots: Slot[] = [...mains, { gym: true, at: gymStart }];
-  let snackShare = 0.1;
-
-  // 2. Pre-entreno: si ya hay una comida principal entre 2,5 h y 45 min antes, hace de pre-entreno.
-  const mainBefore = mains.some((m) => m.at >= gymStart - 150 && m.at <= gymStart - 45);
-  if (mainBefore) snackShare += 0.1;
-  else slots.push({ meal: 'pre', at: round15(Math.max(wake + 10, gymStart - 75)), share: 0.1 });
-
-  // 3. Post-entreno: si no hay comida en las 2 h siguientes, el tentempié se convierte en post-entreno.
-  const mainAfter = mains.some((m) => m.at > end && m.at <= end + 120);
-  if (!mainAfter && end + 30 <= latest) {
-    slots.push({ meal: 'merienda', at: round15(end + 30), share: snackShare, title: 'Post-entreno' });
-    return slots;
-  }
-
-  // 4. Si no, el tentempié va en el hueco más largo del día (sin pisar el entreno).
-  const busy = [...mains.map((m) => [m.at, m.at]), [gymStart, end]].sort((x, y) => x[0] - y[0]);
-  let best: [number, number] | null = null;
-  for (let i = 1; i < busy.length; i++) {
-    const gap: [number, number] = [busy[i - 1][1], busy[i][0]];
-    if (gap[1] - gap[0] >= 150 && (!best || gap[1] - gap[0] > best[1] - best[0])) best = gap;
-  }
-  if (best) {
-    const at = round15((best[0] + best[1]) / 2);
-    slots.push({ meal: at < toMin('12:30') ? 'mediaManana' : 'merienda', at, share: snackShare });
-  } else {
-    mains.find((m) => m.meal === 'comida')!.share += snackShare;
-  }
-  return slots;
+export function personDay(wakeTime: string) {
+  const wake = toMin(wakeTime);
+  return (t: string) => { const x = toMin(t); return x < wake ? x + 1440 : x; };
 }
 
-export function buildDefaultPlan(a: OnboardingAnswers, m: MacroReference): { days: PlanDay[] } {
-  const gymDays = GYM_DAYS[a.gym_days];
-  const split = SPLITS[a.gym_days];
-  const wake = toMin(a.wake_time);
-  // Horas anteriores a despertarse (acostarse o entrenar pasada la medianoche) cuentan como del mismo día.
-  const dayMin = (t: string) => { const x = toMin(t); return x < wake ? x + 1440 : x; };
-  const sleep = dayMin(a.sleep_time);
-  const training = dayMin(a.training_time);
+type Interval = [start: number, end: number];
 
-  const days: PlanDay[] = [0, 1, 2, 3, 4, 5, 6].map((dow) => {
-    const gymIndex = gymDays.indexOf(dow);
-    const workoutKey = gymIndex >= 0 ? split[gymIndex] : null;
+export interface DaySchedule {
+  dow: number;
+  gym: Interval | null;
+  sport: Interval | null;
+  commitment: Interval | null;
+}
+
+// Margen para ir y volver entre clase/trabajo y el gimnasio, y para no juntar gimnasio y deporte.
+const COMMIT_GAP = 30;
+const SPORT_GAP = 60;
+const WEEK = [1, 2, 3, 4, 5, 6, 0];
+
+const overlaps = (a: Interval, b: Interval, gap = 0) => a[0] < b[1] + gap && b[0] < a[1] + gap;
+
+// Recorre ideal, ideal ∓ 15, ideal ∓ 30... y devuelve la primera hora dentro de [min, max] que acepte `ok`.
+function nearest(ideal: number, min: number, max: number, ok: (t: number) => boolean) {
+  for (let k = 0; k * 15 <= 1440; k++) {
+    for (const t of k === 0 ? [ideal] : [ideal - k * 15, ideal + k * 15]) {
+      if (t >= min && t <= max && ok(t)) return t;
+    }
+  }
+  return null;
+}
+
+function* combinations<T>(items: T[], k: number, from = 0, acc: T[] = []): Generator<T[]> {
+  if (acc.length === k) {
+    yield acc;
+    return;
+  }
+  for (let i = from; i <= items.length - (k - acc.length); i++) yield* combinations(items, k, i + 1, [...acc, items[i]]);
+}
+
+// Elige los días de gimnasio y la hora de cada uno: lo más cerca posible de la hora preferida, sin pisar
+// la clase/trabajo ni el otro deporte. Evita, por este orden de peso, juntar gimnasio y deporte el mismo día,
+// el domingo y los días seguidos. gymDaysMissing > 0 si con ese horario no caben todos los días pedidos.
+export function weekSchedule(a: OnboardingAnswers): { days: DaySchedule[]; gymDaysMissing: number } {
+  const dayMin = personDay(a.wake_time);
+  const wake = toMin(a.wake_time);
+  const sleep = dayMin(a.sleep_time);
+  const preferred = dayMin(a.training_time);
+
+  const base = WEEK.map((dow): DaySchedule => {
+    const c = a.commitments.find((x) => x.day === dow);
+    const sportStart = a.sport?.days.includes(dow) ? dayMin(a.sport.start) : null;
+    return {
+      dow,
+      gym: null,
+      sport: sportStart != null ? [sportStart, sportStart + a.sport!.minutes] : null,
+      commitment: c ? [dayMin(c.start), dayMin(c.end)] : null,
+    };
+  });
+
+  const options = new Map<number, number>();
+  for (const d of base) {
+    const start = nearest(preferred, wake + 15, sleep - 30 - a.session_minutes, (t) => {
+      const slot: Interval = [t, t + a.session_minutes];
+      return !(d.commitment && overlaps(slot, d.commitment, COMMIT_GAP)) && !(d.sport && overlaps(slot, d.sport, SPORT_GAP));
+    });
+    if (start != null) options.set(d.dow, start);
+  }
+
+  const feasible = WEEK.filter((dow) => options.has(dow));
+  const n = Math.min(a.gym_days, feasible.length);
+  const cost = (set: number[]) =>
+    set.reduce((c, dow) => {
+      c += Math.abs(options.get(dow)! - preferred) / 60;
+      if (a.sport?.days.includes(dow)) c += 6;
+      if (dow === 0) c += 3;
+      if (set.includes((dow + 1) % 7)) c += 2;
+      return c;
+    }, 0);
+
+  let best: number[] = [];
+  let bestCost = Infinity;
+  for (const set of combinations(feasible, n)) {
+    const c = cost(set);
+    if (c < bestCost) {
+      best = set;
+      bestCost = c;
+    }
+  }
+
+  const days = base.map((d) => {
+    const start = best.includes(d.dow) ? options.get(d.dow)! : null;
+    return { ...d, gym: start != null ? ([start, start + a.session_minutes] as Interval) : null };
+  });
+  return { days, gymDaysMissing: a.gym_days - n };
+}
+
+type MealSlot = { meal: keyof typeof MEALS; at: number; weight: number; title?: string; takeaway?: boolean };
+
+// Coloca las comidas del día alrededor de las sesiones (gimnasio y/o deporte) y de la clase/trabajo.
+// weight es el peso relativo de cada comida en los macros del día.
+function daySlots(sessions: Interval[], commitment: Interval | null, wake: number, sleep: number): MealSlot[] {
+  const latest = sleep - 45; // última comida como tarde 45 min antes de dormir
+  const inSession = (t: number) => sessions.some(([s, e]) => t >= s && t < e);
+  // Ninguna comida principal desde 1 h antes de entrenar hasta 15 min después de acabar.
+  const nearSession = (t: number) => sessions.some(([s, e]) => t > s - 60 && t < e + 15);
+  const inCommitment = (t: number) => !!commitment && t > commitment[0] && t < commitment[1];
+
+  // Una comida principal sale de la clase/trabajo si basta con moverla hora y media como mucho;
+  // si no, se queda a su hora y se come allí (para llevar). Los tentempiés nunca se mueven por eso.
+  const place = (ideal: number, min: number, max: number, blocked: (t: number) => boolean) => {
+    const at = round15(ideal);
+    return (
+      nearest(at, Math.max(min, at - 90), Math.min(max, at + 90), (t) => !blocked(t) && !inCommitment(t)) ??
+      nearest(at, min, max, (t) => !blocked(t))
+    );
+  };
+  // Si no cabe con 2,5 h entre comidas, se relaja la separación antes que comer en mitad de una sesión.
+  const placeMain = (ideal: number, min: number, max: number) =>
+    place(ideal, min, max, nearSession) ??
+    place(ideal, min, max, inSession) ??
+    nearest(round15(ideal), wake + 15, latest, (t) => !inSession(t)) ??
+    round15(ideal);
+
+  const desayuno = placeMain(wake + 30, wake + 15, latest - 300);
+  const comida = placeMain(Math.max(toMin('14:00'), desayuno + 240), desayuno + 150, latest - 150);
+  const cena = placeMain(Math.min(toMin('21:00'), latest), comida + 150, latest);
+  const meals: MealSlot[] = [
+    { meal: 'desayuno', at: desayuno, weight: 25 },
+    { meal: 'comida', at: comida, weight: 30 },
+    { meal: 'cena', at: cena, weight: sessions.length ? 25 : 30 },
+  ];
+
+  for (const m of meals) {
+    const title = MEALS[m.meal](0, false).title;
+    if (sessions.some(([, e]) => m.at > e && m.at <= e + 120)) m.title = `${title} · post-entreno`;
+    else if (sessions.some(([s]) => m.at >= s - 150 && m.at <= s - 45)) m.title = `${title} · pre-entreno`;
+  }
+
+  // Pre y post de cada sesión, salvo que ya haya una comida que haga ese papel.
+  const hasMealIn = (from: number, to: number) => meals.some((m) => m.at >= from && m.at <= to);
+  const snackBlocked = (t: number) => inSession(t) || meals.some((m) => Math.abs(m.at - t) < 60);
+  for (const [s, e] of [...sessions].sort((x, y) => x[0] - y[0])) {
+    if (!hasMealIn(s - 150, s - 30) && s - 30 >= wake + 10) {
+      const at = nearest(s - 75, Math.max(wake + 10, s - 120), s - 30, (t) => !snackBlocked(t));
+      if (at != null) meals.push({ meal: 'pre', at, weight: 10 });
+    }
+    if (!hasMealIn(e + 1, e + 120) && e + 30 <= latest) {
+      const at = nearest(e + 30, e + 15, Math.min(e + 90, latest), (t) => !snackBlocked(t));
+      if (at != null) meals.push({ meal: 'merienda', at, weight: 10, title: 'Post-entreno' });
+    }
+  }
+
+  // Si faltan tentempiés, van en el hueco más largo entre comidas (sin pisar ninguna sesión).
+  const wanted = sessions.length ? 2 : 1;
+  for (let snacks = meals.length - 3; snacks < wanted; snacks++) {
+    const times = meals.map((m) => m.at).sort((x, y) => x - y);
+    let at: number | null = null;
+    let bestGap = 0;
+    for (let i = 1; i < times.length; i++) {
+      const gap = times[i] - times[i - 1];
+      if (gap < 180 || gap <= bestGap) continue;
+      const t = nearest(round15((times[i] + times[i - 1]) / 2), times[i - 1] + 60, times[i] - 60, (x) => !inSession(x));
+      if (t != null) {
+        at = t;
+        bestGap = gap;
+      }
+    }
+    if (at == null) break;
+    meals.push({ meal: at < toMin('12:30') ? 'mediaManana' : 'merienda', at, weight: sessions.length ? 10 : 15 });
+  }
+
+  for (const m of meals) m.takeaway = inCommitment(m.at);
+  return meals;
+}
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+export function buildDefaultPlan(a: OnboardingAnswers, m: MacroReference): { days: PlanDay[] } {
+  const { days: week } = weekSchedule(a);
+  const split = SPLITS[a.gym_days];
+  const dayMin = personDay(a.wake_time);
+  const wake = toMin(a.wake_time);
+  const sleep = dayMin(a.sleep_time);
+  const gymOrder = week.filter((d) => d.gym).map((d) => d.dow);
+  const sportName = a.sport ? capitalize(a.sport.name.trim()) : '';
+
+  const days: PlanDay[] = week.map((d) => {
+    const workoutKey = d.gym ? split[gymOrder.indexOf(d.dow)] : null;
     const raw: Omit<PlanBlock, 'sort_order'>[] = [
       { time: fromMin(wake), category: 'rest', title: 'Despertar', subtitle: '', exercises: [], meal_items: [] },
     ];
 
-    for (const slot of daySlots(workoutKey ? training : null, a.session_minutes, wake, sleep)) {
-      if ('gym' in slot) {
-        const w = WORKOUTS[workoutKey!];
-        raw.push({
-          time: fromMin(slot.at),
-          category: 'train',
-          title: `Gym · ${w.title}`,
-          subtitle: `${w.exercises.length} ejercicios · ${a.session_minutes} min`,
-          exercises: buildExercises(workoutKey!, a.level),
-          meal_items: [],
-        });
-      } else {
-        const def = MEALS[slot.meal](dow, a.goal === 'fat_loss');
-        const meal = scaleMeal(def, { p: m.protein_g * slot.share, c: m.carbs_g * slot.share, f: m.fat_g * slot.share });
-        raw.push({
-          time: fromMin(slot.at),
-          category: 'meal',
-          title: slot.title ?? def.title,
-          subtitle: meal.subtitle,
-          exercises: [],
-          meal_items: meal.items.map((it, i) => ({ ...it, sort_order: i + 1 })),
-        });
-      }
+    if (d.commitment) {
+      raw.push({
+        time: fromMin(d.commitment[0]),
+        category: 'rest',
+        title: a.commitment_label,
+        subtitle: `hasta las ${fromMin(d.commitment[1])}`,
+        exercises: [],
+        meal_items: [],
+      });
+    }
+    if (d.gym && workoutKey) {
+      const w = WORKOUTS[workoutKey];
+      raw.push({
+        time: fromMin(d.gym[0]),
+        category: 'train',
+        title: `Gym · ${w.title}`,
+        subtitle: `${w.exercises.length} ejercicios · ${a.session_minutes} min`,
+        exercises: buildExercises(workoutKey, a.level),
+        meal_items: [],
+      });
+    }
+    if (d.sport && a.sport) {
+      raw.push({ time: fromMin(d.sport[0]), category: 'train', title: sportName, subtitle: `${a.sport.minutes} min`, exercises: [], meal_items: [] });
     }
 
-    raw.push({ time: fromMin(sleep - 60), category: 'rest', title: 'Desconexión', subtitle: 'sin pantallas', exercises: [], meal_items: [] });
+    const sessions = [d.gym, d.sport].filter((x): x is Interval => x != null);
+    const slots = daySlots(sessions, d.commitment, wake, sleep);
+    const totalWeight = slots.reduce((sum, s) => sum + s.weight, 0);
+    for (const slot of slots) {
+      const share = slot.weight / totalWeight;
+      const def = MEALS[slot.meal](d.dow, a.goal === 'fat_loss');
+      const meal = scaleMeal(def, { p: m.protein_g * share, c: m.carbs_g * share, f: m.fat_g * share });
+      raw.push({
+        time: fromMin(slot.at),
+        category: 'meal',
+        title: `${slot.title ?? def.title}${slot.takeaway ? ' · para llevar' : ''}`,
+        subtitle: meal.subtitle,
+        exercises: [],
+        meal_items: meal.items.map((it, i) => ({ ...it, sort_order: i + 1 })),
+      });
+    }
+
+    const lastSessionEnd = Math.max(0, ...sessions.map((s) => s[1]));
+    if (lastSessionEnd <= sleep - 60) {
+      raw.push({ time: fromMin(sleep - 60), category: 'rest', title: 'Desconexión', subtitle: 'sin pantallas', exercises: [], meal_items: [] });
+    }
     raw.push({ time: fromMin(sleep), category: 'rest', title: 'Dormir', subtitle: '', exercises: [], meal_items: [] });
 
     const blocks = raw
       .sort((x, y) => dayMin(x.time) - dayMin(y.time))
       .map((b, i) => ({ ...b, sort_order: i + 1 }));
 
-    return {
-      day_of_week: dow,
-      label: workoutKey ? `${WORKOUTS[workoutKey].title} · Gym` : 'Descanso',
-      accent_color: dayAccents[dow],
-      blocks,
-    };
+    const label = [workoutKey ? `${WORKOUTS[workoutKey].title} · Gym` : null, d.sport ? sportName : null].filter(Boolean).join(' + ');
+    return { day_of_week: d.dow, label: label || 'Descanso', accent_color: dayAccents[d.dow], blocks };
   });
 
   return { days };
