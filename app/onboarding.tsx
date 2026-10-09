@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth-context';
-import { colors, fonts, glow, neon, dayLabels, dayAccents } from '../lib/theme';
+import { colors, fonts, glow, neon, dayAccents } from '../lib/theme';
+import { knownLabel, useI18n, type Lang, type StringKey, type Translate } from '../lib/i18n';
 import { computeMacros, goalHasRate, rateFeedback, recommendedRate, type RateLevel } from '../lib/nutrition';
 import { buildDefaultPlan, fromMin, personDay, weekSchedule } from '../lib/default-plan';
 import type { DailyActivity, Goal, Level, OnboardingAnswers, Sex } from '../lib/types';
@@ -12,22 +13,10 @@ import Chip from '../components/onboarding/Chip';
 import TimeStepper from '../components/onboarding/TimeStepper';
 import PressableScale from '../components/PressableScale';
 
-const GOALS: { value: Goal; label: string }[] = [
-  { value: 'muscle', label: 'Ganar músculo' },
-  { value: 'fat_loss', label: 'Perder grasa' },
-  { value: 'maintain', label: 'Mantenerme' },
-  { value: 'performance', label: 'Rendir en mi deporte' },
-];
-const LEVELS: { value: Level; label: string }[] = [
-  { value: 'beginner', label: 'Principiante' },
-  { value: 'intermediate', label: 'Intermedio' },
-  { value: 'advanced', label: 'Avanzado' },
-];
-const ACTIVITY: { value: DailyActivity; label: string; hint: string }[] = [
-  { value: 'sedentary', label: 'Sentado casi todo el día', hint: 'Clase, oficina, estudio' },
-  { value: 'light', label: 'Me muevo algo', hint: 'Voy andando a sitios, estoy de pie a ratos' },
-  { value: 'active', label: 'Muy activo', hint: 'Trabajo físico o camino mucho' },
-];
+const GOALS: Goal[] = ['muscle', 'fat_loss', 'maintain', 'performance'];
+const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced'];
+const ACTIVITY: DailyActivity[] = ['sedentary', 'light', 'active'];
+// Se guardan con su nombre en español y se muestran traducidos (ob.sport.<nombre>).
 const SPORTS = ['Boxeo', 'Fútbol', 'Pádel', 'Running', 'Baloncesto', 'Natación', 'Artes marciales', 'Ciclismo'];
 const RATE_COLORS: Record<RateLevel, string> = {
   slow: colors.textDim,
@@ -35,9 +24,8 @@ const RATE_COLORS: Record<RateLevel, string> = {
   fast: colors.accentBright,
   too_fast: colors.bloodBright,
 };
-const STEPS = ['Tú', 'Objetivo', 'Horario', 'Deporte', 'Gimnasio', 'Resumen'];
+const STEPS: StringKey[] = ['ob.step.you', 'ob.step.goal', 'ob.step.schedule', 'ob.step.sport', 'ob.step.gym', 'ob.step.summary'];
 const WEEK = [1, 2, 3, 4, 5, 6, 0];
-const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
 type CommitmentKind = 'none' | 'Clase' | 'Trabajo';
 type Hours = { start: string; end: string };
@@ -128,55 +116,62 @@ function toAnswers(d: Draft): OnboardingAnswers {
   };
 }
 
-function stepError(step: number, d: Draft): string | null {
+function stepError(step: number, d: Draft, t: Translate, lang: Lang): string | null {
   const wake = toMin(d.wake_time);
   const dayMin = personDay(d.wake_time);
   const sleep = dayMin(d.sleep_time);
-  const label = d.commitmentKind === 'Trabajo' ? 'el trabajo' : 'la clase';
+  const kind = d.commitmentKind === 'Trabajo' ? 'Trabajo' : 'Clase';
+  const the = t(`ob.the.${kind}`);
+  // En los mensajes el día va en minúscula (el lunes), salvo en alemán (am Montag).
+  const dayName = (dow: number) => {
+    const name = t(`day.long.${dow}` as StringKey);
+    return lang === 'de' ? name : name.toLowerCase();
+  };
+  const sport = knownLabel(t, 'ob.sport', d.sport_name.trim());
+  const sportLower = lang === 'de' ? sport : sport.toLowerCase();
 
   if (step === 0) {
-    if (!(num(d.age) >= 14 && num(d.age) <= 90)) return 'Pon una edad entre 14 y 90.';
-    if (!(num(d.height_cm) >= 120 && num(d.height_cm) <= 230)) return 'Pon tu altura en centímetros (120-230).';
-    if (!(num(d.weight_kg) >= 35 && num(d.weight_kg) <= 250)) return 'Pon tu peso en kilos (35-250).';
+    if (!(num(d.age) >= 14 && num(d.age) <= 90)) return t('ob.err.age');
+    if (!(num(d.height_cm) >= 120 && num(d.height_cm) <= 230)) return t('ob.err.height');
+    if (!(num(d.weight_kg) >= 35 && num(d.weight_kg) <= 250)) return t('ob.err.weight');
     if (d.knowsBodyFat && !(num(d.body_fat_pct) >= 3 && num(d.body_fat_pct) <= 60)) {
-      return 'El % de grasa debe estar entre 3 y 60. Si no lo sabes, marca "No lo sé".';
+      return t('ob.err.fat');
     }
   }
-  if (step === 1 && goalHasRate(d.goal) && d.weekly_rate_kg <= 0) return 'Elige cuánto quieres cambiar por semana.';
+  if (step === 1 && goalHasRate(d.goal) && d.weekly_rate_kg <= 0) return t('ob.err.rate');
   if (step === 2) {
-    if (wake < toMin('05:00') || wake > toMin('11:00')) return 'La hora de levantarte debe estar entre las 05:00 y las 11:00.';
-    if (sleep - wake < 12 * 60) return 'Entre levantarte y acostarte debería haber al menos 12 horas.';
+    if (wake < toMin('05:00') || wake > toMin('11:00')) return t('ob.err.wake');
+    if (sleep - wake < 12 * 60) return t('ob.err.awake');
     if (d.commitmentKind !== 'none') {
       const days = Object.keys(d.commitments).map(Number);
-      if (!days.length) return `Marca qué días tienes ${d.commitmentKind.toLowerCase()}.`;
+      if (!days.length) return t('ob.err.commitmentDays', { what: t(`ob.what.${kind}`) });
       for (const day of days) {
         const c = d.commitments[day];
         const [s, e] = [dayMin(c.start), dayMin(c.end)];
         if (e - s < 30 || s < wake || e > sleep) {
-          return `El ${DAY_NAMES[day]}, ${label} tiene que empezar después de levantarte y acabar antes de acostarte.`;
+          return t('ob.err.commitmentHours', { day: dayName(day), what: the });
         }
       }
     }
   }
   if (step === 3 && d.hasSport) {
     const name = d.sport_name.trim();
-    if (!name) return '¿Qué deporte haces? Elige uno o escríbelo.';
-    if (!d.sport_days.length) return `Marca qué días entrenas ${name.toLowerCase()}.`;
+    if (!name) return t('ob.err.sportName');
+    if (!d.sport_days.length) return t('ob.err.sportDays', { sport: sportLower });
     const s = dayMin(d.sport_start);
     const e = s + d.sport_minutes;
-    if (s < wake + 15 || e > sleep - 30) return `Tu sesión de ${name.toLowerCase()} no cabe entre que te levantas y te acuestas.`;
+    if (s < wake + 15 || e > sleep - 30) return t('ob.err.sportFit', { sport: sportLower });
     if (d.commitmentKind !== 'none') {
       for (const day of d.sport_days) {
         const c = d.commitments[day];
-        if (c && s < dayMin(c.end) && dayMin(c.start) < e) return `El ${DAY_NAMES[day]}, ${name.toLowerCase()} coincide con ${label}.`;
+        if (c && s < dayMin(c.end) && dayMin(c.start) < e) return t('ob.err.sportClash', { day: dayName(day), sport: sportLower, what: the });
       }
     }
   }
   if (step === 4) {
     const { gymDaysMissing } = weekSchedule(toAnswers(d));
     if (gymDaysMissing > 0) {
-      const fit = d.gym_days - gymDaysMissing;
-      return `Con tu horario solo caben ${fit} ${fit === 1 ? 'día' : 'días'} de gimnasio de ${d.session_minutes} min. Baja los días, acorta la sesión o revisa tu horario.`;
+      return t('ob.err.gymFit', { n: d.gym_days - gymDaysMissing, minutes: d.session_minutes });
     }
   }
   return null;
@@ -185,6 +180,10 @@ function stepError(step: number, d: Draft): string | null {
 export default function OnboardingScreen() {
   const router = useRouter();
   const { session, onboarded, onboardingAnswers, refreshProfile } = useAuth();
+  const { t, lang, locale } = useI18n();
+  const fmt = (n: number, digits: number) => n.toLocaleString(locale, { maximumFractionDigits: digits });
+  const dayShort = (dow: number) => t(`day.short.${dow}` as StringKey);
+  const minutesLabel = (n: number) => (n < 120 ? t('common.minutes', { n }) : t('common.twoHours'));
   const [draft, setDraft] = useState<Draft>(() => draftFrom(onboardingAnswers));
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -232,7 +231,7 @@ export default function OnboardingScreen() {
   }
 
   function next() {
-    const err = stepError(step, draft);
+    const err = stepError(step, draft, t, lang);
     setError(err);
     if (err) return;
     if (step === 0 && goalHasRate(draft.goal) && draft.weekly_rate_kg <= 0) {
@@ -242,7 +241,7 @@ export default function OnboardingScreen() {
   }
 
   const last = STEPS.length - 1;
-  const macros = useMemo(() => (step === last ? computeMacros(toAnswers(draft)) : null), [step, draft, last]);
+  const macros = useMemo(() => (step === last ? computeMacros(toAnswers(draft), lang) : null), [step, draft, last, lang]);
   const schedule = useMemo(() => (step >= 4 ? weekSchedule(toAnswers(draft)) : null), [step, draft]);
 
   async function create() {
@@ -250,11 +249,11 @@ export default function OnboardingScreen() {
     setSaving(true);
     setError(null);
     const answers = toAnswers(draft);
-    const plan = { ...buildDefaultPlan(answers, macros), macros, macro_reference: macros };
+    const plan = { ...buildDefaultPlan(answers, macros, lang), macros, macro_reference: macros };
     const { error: rpcError } = await supabase.rpc('apply_generated_plan', { plan, answers });
     if (rpcError) {
       setSaving(false);
-      setError(`No se pudo guardar tu plan: ${rpcError.message}`);
+      setError(t('ob.saveError', { msg: rpcError.message }));
       return;
     }
     await refreshProfile();
@@ -265,6 +264,8 @@ export default function OnboardingScreen() {
   const commitmentDays = WEEK.filter((dow) => draft.commitments[dow]);
   const firstCommitment = commitmentDays.length ? draft.commitments[commitmentDays[0]] : null;
   const sportName = draft.sport_name.trim();
+  const sportLabel = knownLabel(t, 'ob.sport', sportName);
+  const commitmentLabel = draft.commitmentKind === 'none' ? '' : t(`ob.commitment.${draft.commitmentKind}`);
 
   return (
     <SafeAreaView style={styles.flex}>
@@ -274,50 +275,47 @@ export default function OnboardingScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.eyebrow}>Paso {step + 1} de {STEPS.length} · {STEPS[step]}</Text>
+          <Text style={styles.eyebrow}>{t('ob.stepOf', { n: step + 1, total: STEPS.length, name: t(STEPS[step]) })}</Text>
 
           {step === 0 && (
             <>
-              <Text style={styles.title}>Cuéntame de ti</Text>
-              <Label>Sexo</Label>
+              <Text style={styles.title}>{t('ob.youTitle')}</Text>
+              <Label>{t('ob.sex')}</Label>
               <Row>
-                <Chip label="Hombre" selected={draft.sex === 'male'} onPress={() => set('sex', 'male')} />
-                <Chip label="Mujer" selected={draft.sex === 'female'} onPress={() => set('sex', 'female')} />
+                <Chip label={t('ob.male')} selected={draft.sex === 'male'} onPress={() => set('sex', 'male')} />
+                <Chip label={t('ob.female')} selected={draft.sex === 'female'} onPress={() => set('sex', 'female')} />
               </Row>
               <View style={styles.inputsRow}>
-                <NumberField label="Edad" unit="años" value={draft.age} onChange={(v) => set('age', v)} />
-                <NumberField label="Altura" unit="cm" value={draft.height_cm} onChange={(v) => set('height_cm', v)} />
-                <NumberField label="Peso" unit="kg" value={draft.weight_kg} onChange={(v) => set('weight_kg', v)} />
+                <NumberField label={t('ob.age')} unit={t('ob.years')} value={draft.age} onChange={(v) => set('age', v)} />
+                <NumberField label={t('ob.height')} unit="cm" value={draft.height_cm} onChange={(v) => set('height_cm', v)} />
+                <NumberField label={t('ob.weight')} unit="kg" value={draft.weight_kg} onChange={(v) => set('weight_kg', v)} />
               </View>
-              <Label>¿Sabes tu % de grasa corporal?</Label>
+              <Label>{t('ob.knowsFat')}</Label>
               <Row>
-                <Chip label="Sí" selected={draft.knowsBodyFat} onPress={() => set('knowsBodyFat', true)} />
-                <Chip label="No lo sé" selected={!draft.knowsBodyFat} onPress={() => set('knowsBodyFat', false)} />
+                <Chip label={t('common.yes')} selected={draft.knowsBodyFat} onPress={() => set('knowsBodyFat', true)} />
+                <Chip label={t('ob.dontKnow')} selected={!draft.knowsBodyFat} onPress={() => set('knowsBodyFat', false)} />
               </Row>
               {draft.knowsBodyFat ? (
                 <View style={{ width: 140, marginTop: 4 }}>
-                  <NumberField label="% de grasa" unit="%" value={draft.body_fat_pct} onChange={(v) => set('body_fat_pct', v)} />
+                  <NumberField label={t('ob.fatPct')} unit="%" value={draft.body_fat_pct} onChange={(v) => set('body_fat_pct', v)} />
                 </View>
               ) : null}
-              <Text style={styles.hint}>
-                Es opcional, pero con él el cálculo es más preciso: la proteína se ajusta a tu masa magra. Lo da una báscula de
-                bioimpedancia o un plicómetro.
-              </Text>
+              <Text style={styles.hint}>{t('ob.fatHint')}</Text>
             </>
           )}
 
           {step === 1 && (
             <>
-              <Text style={styles.title}>Tu objetivo</Text>
-              <Row>{GOALS.map((g) => <Chip key={g.value} label={g.label} selected={draft.goal === g.value} onPress={() => chooseGoal(g.value)} />)}</Row>
+              <Text style={styles.title}>{t('ob.goalTitle')}</Text>
+              <Row>{GOALS.map((g) => <Chip key={g} label={t(`ob.goal.${g}`)} selected={draft.goal === g} onPress={() => chooseGoal(g)} />)}</Row>
 
               {goalHasRate(draft.goal) && feedback ? (
                 <View style={styles.card}>
-                  <Text style={styles.label}>¿Cuánto quieres {draft.goal === 'muscle' ? 'ganar' : 'perder'} por semana?</Text>
+                  <Text style={styles.label}>{t(draft.goal === 'muscle' ? 'ob.rateGain' : 'ob.rateLose')}</Text>
                   <View style={styles.rateRow}>
                     <RoundButton label="−" onPress={() => set('weekly_rate_kg', Math.max(0.05, +(draft.weekly_rate_kg - 0.05).toFixed(2)))} />
                     <Text style={[styles.rateValue, { color: RATE_COLORS[feedback.level] }]}>
-                      {draft.weekly_rate_kg.toLocaleString('es-ES', { minimumFractionDigits: 2 })} kg
+                      {draft.weekly_rate_kg.toLocaleString(locale, { minimumFractionDigits: 2 })} kg
                     </Text>
                     <RoundButton label="+" onPress={() => set('weekly_rate_kg', Math.min(2, +(draft.weekly_rate_kg + 0.05).toFixed(2)))} />
                   </View>
@@ -332,54 +330,56 @@ export default function OnboardingScreen() {
                       ]}
                     />
                   </View>
-                  <Text style={[styles.rateMessage, { color: RATE_COLORS[feedback.level] }]}>{feedback.message}</Text>
+                  <Text style={[styles.rateMessage, { color: RATE_COLORS[feedback.level] }]}>{t(feedback.messageKey)}</Text>
                   <Text style={styles.hint}>
-                    {feedback.pctPerWeek.toLocaleString('es-ES', { maximumFractionDigits: 2 })} % de tu peso por semana · unos{' '}
-                    {feedback.monthlyKg.toLocaleString('es-ES', { maximumFractionDigits: 1 })} kg al mes. Recomendado:{' '}
-                    {draft.goal === 'muscle' ? '0,1-0,5 %' : '0,5-1 %'} semanal.
+                    {t('ob.rateDetail', {
+                      pct: fmt(feedback.pctPerWeek, 2),
+                      monthly: fmt(feedback.monthlyKg, 1),
+                      range: draft.goal === 'muscle' ? `${fmt(0.1, 1)}-${fmt(0.5, 1)} %` : `${fmt(0.5, 1)}-1 %`,
+                    })}
                   </Text>
                 </View>
               ) : null}
-              {draft.goal === 'maintain' ? <Text style={styles.hint}>Comerás lo que gastas: mismo peso, mejor composición.</Text> : null}
-              {draft.goal === 'performance' ? <Text style={styles.hint}>Un ligero superávit para rendir y recuperar mejor.</Text> : null}
+              {draft.goal === 'maintain' ? <Text style={styles.hint}>{t('ob.maintainHint')}</Text> : null}
+              {draft.goal === 'performance' ? <Text style={styles.hint}>{t('ob.performanceHint')}</Text> : null}
             </>
           )}
 
           {step === 2 && (
             <>
-              <Text style={styles.title}>Tu horario</Text>
+              <Text style={styles.title}>{t('ob.scheduleTitle')}</Text>
               <View style={styles.inputsRow}>
                 <View style={{ flex: 1 }}>
-                  <Label>Te levantas</Label>
+                  <Label>{t('ob.wake')}</Label>
                   <TimeStepper value={draft.wake_time} onChange={(v) => set('wake_time', v)} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Label>Te acuestas</Label>
+                  <Label>{t('ob.sleep')}</Label>
                   <TimeStepper value={draft.sleep_time} onChange={(v) => set('sleep_time', v)} />
                 </View>
               </View>
 
-              <Label>¿Tienes clase o trabajo?</Label>
+              <Label>{t('ob.hasCommitment')}</Label>
               <Row>
                 {(['none', 'Clase', 'Trabajo'] as const).map((k) => (
-                  <Chip key={k} label={k === 'none' ? 'No' : k} selected={draft.commitmentKind === k} onPress={() => set('commitmentKind', k)} />
+                  <Chip key={k} label={k === 'none' ? t('common.no') : t(`ob.commitment.${k}`)} selected={draft.commitmentKind === k} onPress={() => set('commitmentKind', k)} />
                 ))}
               </Row>
 
               {draft.commitmentKind !== 'none' ? (
                 <View style={styles.card}>
-                  <Text style={[styles.label, { marginTop: 0 }]}>¿Qué días?</Text>
+                  <Text style={[styles.label, { marginTop: 0 }]}>{t('ob.whichDays')}</Text>
                   <Row>
                     {WEEK.map((dow) => (
-                      <Chip key={dow} label={dayLabels[dow]} selected={!!draft.commitments[dow]} onPress={() => toggleCommitmentDay(dow)} />
+                      <Chip key={dow} label={dayShort(dow)} selected={!!draft.commitments[dow]} onPress={() => toggleCommitmentDay(dow)} />
                     ))}
                   </Row>
                   {commitmentDays.length > 1 ? (
                     <>
-                      <Label>¿Mismo horario todos los días?</Label>
+                      <Label>{t('ob.sameHours')}</Label>
                       <Row>
-                        <Chip label="Sí" selected={draft.sameHours} onPress={() => setSameHours(true)} />
-                        <Chip label="No, cambia" selected={!draft.sameHours} onPress={() => setSameHours(false)} />
+                        <Chip label={t('common.yes')} selected={draft.sameHours} onPress={() => setSameHours(true)} />
+                        <Chip label={t('ob.notSame')} selected={!draft.sameHours} onPress={() => setSameHours(false)} />
                       </Row>
                     </>
                   ) : null}
@@ -388,97 +388,100 @@ export default function OnboardingScreen() {
                   ) : (
                     commitmentDays.map((dow) => (
                       <View key={dow} style={styles.dayHours}>
-                        <Text style={[styles.dayHoursName, { color: dayAccents[dow] }]}>{dayLabels[dow]}</Text>
+                        <Text style={[styles.dayHoursName, { color: dayAccents[dow] }]}>{dayShort(dow)}</Text>
                         <HoursRow hours={draft.commitments[dow]} onChange={(h) => setCommitmentHours(dow, h)} />
                       </View>
                     ))
                   )}
                 </View>
               ) : null}
-              <Text style={styles.hint}>
-                Con esto colocamos el gimnasio y las comidas en tus huecos libres. Si una comida cae en {draft.commitmentKind === 'Trabajo' ? 'el trabajo' : 'clase'}, te la marcamos para llevar.
-              </Text>
+              <Text style={styles.hint}>{t(draft.commitmentKind === 'Trabajo' ? 'ob.scheduleHintTrabajo' : 'ob.scheduleHintClase')}</Text>
             </>
           )}
 
           {step === 3 && (
             <>
-              <Text style={styles.title}>Otro deporte</Text>
-              <Label>¿Entrenas algún deporte aparte del gimnasio?</Label>
+              <Text style={styles.title}>{t('ob.sportTitle')}</Text>
+              <Label>{t('ob.hasSport')}</Label>
               <Row>
-                <Chip label="Sí" selected={draft.hasSport} onPress={() => set('hasSport', true)} />
-                <Chip label="No" selected={!draft.hasSport} onPress={() => set('hasSport', false)} />
+                <Chip label={t('common.yes')} selected={draft.hasSport} onPress={() => set('hasSport', true)} />
+                <Chip label={t('common.no')} selected={!draft.hasSport} onPress={() => set('hasSport', false)} />
               </Row>
               {draft.hasSport ? (
                 <View style={styles.card}>
-                  <Text style={[styles.label, { marginTop: 0 }]}>¿Cuál?</Text>
-                  <Row>{SPORTS.map((s) => <Chip key={s} label={s} selected={sportName === s} onPress={() => set('sport_name', s)} />)}</Row>
+                  <Text style={[styles.label, { marginTop: 0 }]}>{t('ob.which')}</Text>
+                  <Row>{SPORTS.map((s) => <Chip key={s} label={t(`ob.sport.${s}` as StringKey)} selected={sportName === s} onPress={() => set('sport_name', s)} />)}</Row>
                   <TextInput
                     style={styles.textInput}
                     value={SPORTS.includes(sportName) ? '' : draft.sport_name}
                     onChangeText={(v) => set('sport_name', v)}
-                    placeholder="¿Otro? Escríbelo aquí"
+                    placeholder={t('ob.otherSport')}
                     placeholderTextColor={colors.textFaint}
                     maxLength={40}
                   />
-                  <Label>¿Qué días?</Label>
-                  <Row>{WEEK.map((dow) => <Chip key={dow} label={dayLabels[dow]} selected={draft.sport_days.includes(dow)} onPress={() => toggleSportDay(dow)} />)}</Row>
+                  <Label>{t('ob.whichDays')}</Label>
+                  <Row>{WEEK.map((dow) => <Chip key={dow} label={dayShort(dow)} selected={draft.sport_days.includes(dow)} onPress={() => toggleSportDay(dow)} />)}</Row>
                   <View style={styles.inputsRow}>
                     <View style={{ flex: 1 }}>
-                      <Label>Empiezas</Label>
+                      <Label>{t('ob.sportStart')}</Label>
                       <TimeStepper value={draft.sport_start} onChange={(v) => set('sport_start', v)} />
                     </View>
                   </View>
-                  <Label>¿Cuánto dura?</Label>
-                  <Row>{[45, 60, 90, 120].map((n) => <Chip key={n} label={n < 120 ? `${n} min` : '2 h'} selected={draft.sport_minutes === n} onPress={() => set('sport_minutes', n)} />)}</Row>
+                  <Label>{t('ob.sportLength')}</Label>
+                  <Row>{[45, 60, 90, 120].map((n) => <Chip key={n} label={minutesLabel(n)} selected={draft.sport_minutes === n} onPress={() => set('sport_minutes', n)} />)}</Row>
                 </View>
               ) : null}
-              <Text style={styles.hint}>
-                Lo metemos en tu calendario, no te ponemos el gimnasio encima y sumamos el gasto a tus calorías.
-              </Text>
+              <Text style={styles.hint}>{t('ob.sportHint')}</Text>
             </>
           )}
 
           {step === 4 && (
             <>
-              <Text style={styles.title}>Gimnasio</Text>
-              <Label>¿Cuántos días a la semana?</Label>
+              <Text style={styles.title}>{t('ob.gymTitle')}</Text>
+              <Label>{t('ob.gymDays')}</Label>
               <Row>{[1, 2, 3, 4, 5, 6].map((n) => <Chip key={n} label={String(n)} selected={draft.gym_days === n} onPress={() => set('gym_days', n)} />)}</Row>
-              <Label>¿Cuándo te gustaría entrenar?</Label>
+              <Label>{t('ob.when')}</Label>
               <Row>
-                <Chip label="Por la mañana" selected={toMin(draft.training_time) < toMin('14:00')} onPress={() => set('training_time', '08:30')} />
-                <Chip label="Por la tarde" selected={toMin(draft.training_time) >= toMin('14:00')} onPress={() => set('training_time', '18:00')} />
+                <Chip label={t('ob.morning')} selected={toMin(draft.training_time) < toMin('14:00')} onPress={() => set('training_time', '08:30')} />
+                <Chip label={t('ob.afternoon')} selected={toMin(draft.training_time) >= toMin('14:00')} onPress={() => set('training_time', '18:00')} />
               </Row>
-              <Label>¿A qué hora empiezas?</Label>
+              <Label>{t('ob.startTime')}</Label>
               <TimeStepper value={draft.training_time} onChange={(v) => set('training_time', v)} />
-              <Label>¿Cuánto tiempo quieres entrenar?</Label>
-              <Row>{[45, 60, 75, 90, 120].map((n) => <Chip key={n} label={n < 120 ? `${n} min` : '2 h'} selected={draft.session_minutes === n} onPress={() => set('session_minutes', n)} />)}</Row>
+              <Label>{t('ob.howLong')}</Label>
+              <Row>{[45, 60, 75, 90, 120].map((n) => <Chip key={n} label={minutesLabel(n)} selected={draft.session_minutes === n} onPress={() => set('session_minutes', n)} />)}</Row>
 
               {schedule ? (
                 <View style={styles.previewCard}>
-                  <Text style={styles.previewTitle}>Así quedaría</Text>
+                  <Text style={styles.previewTitle}>{t('ob.preview')}</Text>
                   <View style={styles.previewRow}>
                     {schedule.days.filter((d) => d.gym).map((d) => (
                       <View key={d.dow} style={styles.previewPill}>
-                        <Text style={[styles.previewDay, { color: dayAccents[d.dow] }]}>{dayLabels[d.dow]}</Text>
+                        <Text style={[styles.previewDay, { color: dayAccents[d.dow] }]}>{dayShort(d.dow)}</Text>
                         <Text style={styles.previewTime}>{fromMin(d.gym![0])}</Text>
                       </View>
                     ))}
                   </View>
                   <Text style={styles.hint}>
-                    La hora es tu preferencia: si un día choca con {draft.commitmentKind === 'none' ? 'algo' : draft.commitmentKind === 'Trabajo' ? 'el trabajo' : 'clase'}
-                    {draft.hasSport && sportName ? ` o con ${sportName.toLowerCase()}` : ''}, la movemos lo justo.
+                    {t('ob.previewHint', {
+                      what:
+                        draft.hasSport && sportName
+                          ? t('ob.clash.sport', {
+                              commitment: t(draft.commitmentKind === 'none' ? 'ob.clash.something' : `ob.clash.${draft.commitmentKind}`),
+                              sport: lang === 'de' ? sportLabel : sportLabel.toLowerCase(),
+                            })
+                          : t(draft.commitmentKind === 'none' ? 'ob.clash.something' : `ob.clash.${draft.commitmentKind}`),
+                    })}
                   </Text>
                 </View>
               ) : null}
 
-              <Label>Tu nivel</Label>
-              <Row>{LEVELS.map((l) => <Chip key={l.value} label={l.label} selected={draft.level === l.value} onPress={() => set('level', l.value)} />)}</Row>
-              <Label>Fuera del deporte, ¿cómo de activo eres?</Label>
+              <Label>{t('ob.level')}</Label>
+              <Row>{LEVELS.map((l) => <Chip key={l} label={t(`ob.level.${l}`)} selected={draft.level === l} onPress={() => set('level', l)} />)}</Row>
+              <Label>{t('ob.activity')}</Label>
               {ACTIVITY.map((a) => (
-                <PressableScale key={a.value} onPress={() => set('daily_activity', a.value)} style={[styles.option, draft.daily_activity === a.value && styles.optionSelected]}>
-                  <Text style={[styles.optionTitle, draft.daily_activity === a.value && styles.optionTitleSelected]}>{a.label}</Text>
-                  <Text style={styles.optionHint}>{a.hint}</Text>
+                <PressableScale key={a} onPress={() => set('daily_activity', a)} style={[styles.option, draft.daily_activity === a && styles.optionSelected]}>
+                  <Text style={[styles.optionTitle, draft.daily_activity === a && styles.optionTitleSelected]}>{t(`ob.activity.${a}`)}</Text>
+                  <Text style={styles.optionHint}>{t(`ob.activity.${a}Hint`)}</Text>
                 </PressableScale>
               ))}
             </>
@@ -486,39 +489,38 @@ export default function OnboardingScreen() {
 
           {step === last && macros && schedule && (
             <>
-              <Text style={styles.title}>Tu semana</Text>
+              <Text style={styles.title}>{t('ob.weekTitle')}</Text>
               <View style={styles.card}>
                 {schedule.days.map((d) => {
                   const parts = [
-                    d.commitment ? `${draft.commitmentKind} ${fromMin(d.commitment[0])}–${fromMin(d.commitment[1])}` : null,
-                    d.gym ? `Gym ${fromMin(d.gym[0])}` : null,
-                    d.sport ? `${sportName} ${fromMin(d.sport[0])}` : null,
+                    d.commitment ? `${commitmentLabel} ${fromMin(d.commitment[0])}–${fromMin(d.commitment[1])}` : null,
+                    d.gym ? t('ob.gym', { time: fromMin(d.gym[0]) }) : null,
+                    d.sport ? `${sportLabel} ${fromMin(d.sport[0])}` : null,
                   ].filter(Boolean);
                   return (
                     <View key={d.dow} style={styles.weekRow}>
-                      <Text style={[styles.weekDay, { color: dayAccents[d.dow] }]}>{dayLabels[d.dow]}</Text>
+                      <Text style={[styles.weekDay, { color: dayAccents[d.dow] }]}>{dayShort(d.dow)}</Text>
                       <Text style={[styles.weekText, !d.gym && !d.sport && styles.weekRest]}>
-                        {d.gym || d.sport ? parts.join('  ·  ') : `Descanso${d.commitment ? `  ·  ${parts[0]}` : ''}`}
+                        {d.gym || d.sport ? parts.join('  ·  ') : `${t('ob.rest')}${d.commitment ? `  ·  ${parts[0]}` : ''}`}
                       </Text>
                     </View>
                   );
                 })}
               </View>
 
-              <Text style={[styles.title, { fontSize: 24, marginTop: 22 }]}>Tus números</Text>
+              <Text style={[styles.title, { fontSize: 24, marginTop: 22 }]}>{t('ob.numbersTitle')}</Text>
               <View style={styles.card}>
                 <View style={styles.macroRow}>
-                  <Macro label="Calorías" value={`${macros.calories}`} />
-                  <Macro label="Proteína" value={`${macros.protein_g} g`} />
-                  <Macro label="Carbos" value={`${macros.carbs_g} g`} />
-                  <Macro label="Grasas" value={`${macros.fat_g} g`} />
+                  <Macro label={t('macros.calories')} value={`${macros.calories}`} />
+                  <Macro label={t('macros.protein')} value={`${macros.protein_g} g`} />
+                  <Macro label={t('macros.carbs')} value={`${macros.carbs_g} g`} />
+                  <Macro label={t('macros.fat')} value={`${macros.fat_g} g`} />
                 </View>
                 {macros.why.map((line) => <Text key={line} style={styles.whyLine}>· {line}</Text>)}
               </View>
               <Text style={styles.hint}>
-                Las comidas se cuadran con estos números y se colocan alrededor de tus entrenos. Todo se puede cambiar después:
-                la rutina desde Rutina → Editar y los macros desde Macros.
-                {onboarded ? ' Tu plan actual se sustituirá; el historial de pesos que hayas apuntado se mantiene.' : ''}
+                {t('ob.summaryHint')}
+                {onboarded ? t('ob.replaceHint') : ''}
               </Text>
             </>
           )}
@@ -529,11 +531,11 @@ export default function OnboardingScreen() {
         <View style={styles.footer}>
           {step > 0 ? (
             <PressableScale wrapperStyle={{ flex: 1 }} style={styles.secondary} onPress={() => { setError(null); setStep((s) => s - 1); }} disabled={saving}>
-              <Text style={styles.secondaryText}>Atrás</Text>
+              <Text style={styles.secondaryText}>{t('common.back')}</Text>
             </PressableScale>
           ) : onboarded ? (
             <PressableScale wrapperStyle={{ flex: 1 }} style={styles.secondary} onPress={() => router.back()}>
-              <Text style={styles.secondaryText}>Cancelar</Text>
+              <Text style={styles.secondaryText}>{t('common.cancel')}</Text>
             </PressableScale>
           ) : (
             <View style={{ flex: 1 }} />
@@ -542,7 +544,7 @@ export default function OnboardingScreen() {
             {saving ? (
               <ActivityIndicator color={colors.bg} />
             ) : (
-              <Text style={styles.primaryText}>{step === last ? 'Crear mi plan' : 'Siguiente'}</Text>
+              <Text style={styles.primaryText}>{step === last ? t('ob.create') : t('common.next')}</Text>
             )}
           </PressableScale>
         </View>
@@ -560,14 +562,15 @@ function Row({ children }: { children: React.ReactNode }) {
 }
 
 function HoursRow({ hours, onChange }: { hours: Hours; onChange: (h: Hours) => void }) {
+  const { t } = useI18n();
   return (
     <View style={styles.hoursRow}>
       <View>
-        <Text style={styles.hoursLabel}>Entras</Text>
+        <Text style={styles.hoursLabel}>{t('ob.start')}</Text>
         <TimeStepper value={hours.start} onChange={(start) => onChange({ ...hours, start })} />
       </View>
       <View>
-        <Text style={styles.hoursLabel}>Sales</Text>
+        <Text style={styles.hoursLabel}>{t('ob.end')}</Text>
         <TimeStepper value={hours.end} onChange={(end) => onChange({ ...hours, end })} />
       </View>
     </View>
@@ -612,7 +615,7 @@ const styles = StyleSheet.create({
   progressBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.surface2 },
   progressBarActive: { backgroundColor: neon.line, ...glow(8, 0.7) },
   eyebrow: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: colors.accent, marginTop: 8 },
-  title: { fontFamily: fonts.display, fontSize: 34, color: colors.text, textTransform: 'uppercase', marginTop: 6, marginBottom: 8 },
+  title: { fontFamily: fonts.display, fontSize: 28, color: colors.text, marginTop: 6, marginBottom: 8 },
   label: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.text, marginTop: 20, marginBottom: 10 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   hint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textFaint, marginTop: 10, lineHeight: 18 },
@@ -650,7 +653,7 @@ const styles = StyleSheet.create({
   dayHours: { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.line },
   dayHoursName: { fontFamily: fonts.bodyBold, fontSize: 13 },
   rateRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18 },
-  rateValue: { fontFamily: fonts.display, fontSize: 34, minWidth: 130, textAlign: 'center' },
+  rateValue: { fontFamily: fonts.display, fontSize: 28, minWidth: 130, textAlign: 'center' },
   rateBarTrack: { height: 6, borderRadius: 3, backgroundColor: colors.surface2, marginTop: 14, overflow: 'hidden' },
   rateBarFill: { height: 6, borderRadius: 3 },
   rateMessage: { fontFamily: fonts.bodyBold, fontSize: 14, marginTop: 12 },
@@ -689,7 +692,7 @@ const styles = StyleSheet.create({
   weekText: { flex: 1, fontFamily: fonts.label, fontSize: 12.5, color: colors.text, lineHeight: 18 },
   weekRest: { color: colors.textFaint },
   macroRow: { flexDirection: 'row', marginBottom: 10 },
-  macroValue: { fontFamily: fonts.display, fontSize: 22, color: colors.accentBright },
+  macroValue: { fontFamily: fonts.display, fontSize: 20, color: colors.accentBright },
   macroLabel: { fontFamily: fonts.body, fontSize: 11.5, color: colors.textDim },
   whyLine: { fontFamily: fonts.body, fontSize: 13, color: colors.textDim, lineHeight: 19 },
   error: { fontFamily: fonts.body, fontSize: 13, color: colors.bloodBright, marginTop: 16, lineHeight: 19 },

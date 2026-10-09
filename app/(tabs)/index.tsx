@@ -6,7 +6,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth-context';
 import { useIsWide } from '../../lib/layout';
 import { onDataChanged } from '../../lib/events';
-import { colors, fonts, dayAccents, dayLabels, glow, neon } from '../../lib/theme';
+import { colors, fonts, dayAccents, glow, neon } from '../../lib/theme';
+import { useI18n, type StringKey } from '../../lib/i18n';
 import type { RoutineDay } from '../../lib/types';
 import ExerciseSheet from '../../components/ExerciseSheet';
 import BlockEditor, { type BlockWithItems } from '../../components/BlockEditor';
@@ -15,7 +16,6 @@ import PressableScale from '../../components/PressableScale';
 type DayWithBlocks = RoutineDay & { routine_blocks: BlockWithItems[] };
 
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
-const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 
@@ -38,6 +38,8 @@ function currentBlockId(blocks: BlockWithItems[], now: Date) {
 
 export default function RutinaScreen() {
   const { session } = useAuth();
+  const { t } = useI18n();
+  const dayLong = (dow: number) => t(`day.long.${dow}` as StringKey);
   const router = useRouter();
   const wide = useIsWide();
   const [days, setDays] = useState<DayWithBlocks[]>([]);
@@ -82,12 +84,12 @@ export default function RutinaScreen() {
   const header = (
     <View style={styles.header}>
       <View style={{ flex: 1 }}>
-        <Text style={styles.eyebrow}>Tu semana</Text>
-        {wide ? <Text style={styles.headline}>Rutina</Text> : null}
+        <Text style={styles.eyebrow}>{t('routine.eyebrow')}</Text>
+        {wide ? <Text style={styles.headline}>{t('routine.headline')}</Text> : null}
       </View>
       {days.length ? (
         <PressableScale style={[styles.editButton, editing && styles.editButtonActive]} onPress={() => setEditing((e) => !e)}>
-          <Text style={[styles.editText, editing && styles.editTextActive]}>{editing ? 'Listo' : 'Editar'}</Text>
+          <Text style={[styles.editText, editing && styles.editTextActive]}>{editing ? t('routine.done') : t('routine.edit')}</Text>
         </PressableScale>
       ) : null}
     </View>
@@ -103,17 +105,17 @@ export default function RutinaScreen() {
   } else if (!days.length) {
     content = (
       <View style={styles.center}>
-        <Text style={styles.emptyTitle}>Aún no tienes plan</Text>
-        <Text style={styles.emptyText}>Responde el cuestionario y te montamos la semana con tus entrenos y comidas.</Text>
+        <Text style={styles.emptyTitle}>{t('routine.emptyTitle')}</Text>
+        <Text style={styles.emptyText}>{t('routine.emptyText')}</Text>
         <PressableScale style={styles.emptyButton} onPress={() => router.push('/onboarding')}>
-          <Text style={styles.emptyButtonText}>Crear mi plan</Text>
+          <Text style={styles.emptyButtonText}>{t('routine.createPlan')}</Text>
         </PressableScale>
       </View>
     );
   } else if (wide) {
     content = (
       <ScrollView contentContainerStyle={styles.boardScroll} onLayout={(e) => setBoardWidth(e.nativeEvent.layout.width)}>
-        {editing ? <Text style={styles.editHint}>Modo edición: pulsa un bloque para cambiarlo o añade uno nuevo al final de cada día.</Text> : null}
+        {editing ? <Text style={styles.editHint}>{t('routine.editHintWide')}</Text> : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.board}>
           {WEEK_ORDER.map((dow) => {
             const day = days.find((d) => d.day_of_week === dow);
@@ -125,10 +127,10 @@ export default function RutinaScreen() {
             return (
               <View key={dow} style={[styles.column, { width: columnWidth }, isToday && styles.columnToday]}>
                 <View style={[styles.columnHeader, { borderBottomColor: dayAccents[dow] }]}>
-                  <Text style={[styles.columnDay, { color: dayAccents[dow] }]}>{DAY_NAMES[dow]}</Text>
-                  {isToday ? <Text style={styles.todayTag}>Hoy</Text> : null}
+                  <Text style={[styles.columnDay, { color: dayAccents[dow] }]}>{dayLong(dow)}</Text>
+                  {isToday ? <Text style={styles.todayTag}>{t('common.today')}</Text> : null}
                 </View>
-                <Text style={styles.columnLabel} numberOfLines={2}>{day?.label ?? 'Sin plan'}</Text>
+                <Text style={styles.columnLabel} numberOfLines={2}>{day?.label ?? t('routine.noPlan')}</Text>
                 {day
                   ? blocks.map((b) => (
                       <Pressable
@@ -151,7 +153,7 @@ export default function RutinaScreen() {
                   : null}
                 {editing && day ? (
                   <Pressable onPress={() => addBlock(day)} style={styles.addCard}>
-                    <Text style={styles.addCardText}>+ Añadir</Text>
+                    <Text style={styles.addCardText}>{t('routine.add')}</Text>
                   </Pressable>
                 ) : null}
               </View>
@@ -171,7 +173,7 @@ export default function RutinaScreen() {
             const active = dow === selectedDow;
             return (
               <Pressable key={dow} onPress={() => setSelectedDow(dow)} style={[styles.dayPill, active && styles.dayPillActive]} hitSlop={4}>
-                <Text style={[styles.dayPillText, active && { color: dayAccents[dow] }]}>{dayLabels[dow]}</Text>
+                <Text style={[styles.dayPillText, active && { color: dayAccents[dow] }]}>{t(`day.short.${dow}` as StringKey)}</Text>
                 <View style={[styles.todayDot, dow === today && { backgroundColor: neon.line }]} />
               </Pressable>
             );
@@ -180,7 +182,7 @@ export default function RutinaScreen() {
 
         {!selectedDay ? (
           <View style={styles.center}>
-            <Text style={styles.emptyText}>No hay rutina para este día.</Text>
+            <Text style={styles.emptyText}>{t('routine.noDay')}</Text>
           </View>
         ) : (
           <ScrollView
@@ -189,10 +191,10 @@ export default function RutinaScreen() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.accent} />}
           >
             <View style={[styles.dayHeader, { borderColor: dayAccents[selectedDow] }]}>
-              <Text style={[styles.dayName, { color: dayAccents[selectedDow] }]}>{DAY_NAMES[selectedDow]}</Text>
+              <Text style={[styles.dayName, { color: dayAccents[selectedDow] }]}>{dayLong(selectedDow)}</Text>
               <Text style={styles.dayType}>{selectedDay.label}</Text>
             </View>
-            {editing ? <Text style={styles.editHint}>Pulsa un bloque para cambiarlo.</Text> : null}
+            {editing ? <Text style={styles.editHint}>{t('routine.editHint')}</Text> : null}
 
             {blocks.map((block, i) => {
               const tappable = editing || block.category !== 'rest';
@@ -210,7 +212,7 @@ export default function RutinaScreen() {
                     <View style={[styles.dot, DOTS[block.category], isNow && styles.dotNow]} />
                   </View>
                   <View style={styles.itemBody}>
-                    {isNow ? <Text style={styles.nowTag}>Ahora</Text> : null}
+                    {isNow ? <Text style={styles.nowTag}>{t('common.now')}</Text> : null}
                     <Text style={[styles.itemTitle, block.category === 'train' && { color: colors.bloodBright }]}>{block.title}</Text>
                     {block.subtitle ? <Text style={styles.itemSubtitle}>{block.subtitle}</Text> : null}
                   </View>
@@ -221,7 +223,7 @@ export default function RutinaScreen() {
 
             {editing ? (
               <PressableScale style={styles.addRow} onPress={() => addBlock(selectedDay)}>
-                <Text style={styles.addCardText}>+ Añadir bloque</Text>
+                <Text style={styles.addCardText}>{t('routine.addBlock')}</Text>
               </PressableScale>
             ) : null}
           </ScrollView>
@@ -244,7 +246,7 @@ export default function RutinaScreen() {
         onSaved={load}
         block={editor?.block ?? null}
         dayId={editor?.day.id ?? ''}
-        dayName={editor ? DAY_NAMES[editor.day.day_of_week] : ''}
+        dayName={editor ? dayLong(editor.day.day_of_week) : ''}
         nextSortOrder={Math.max(0, ...(editor?.day.routine_blocks ?? []).map((b) => b.sort_order)) + 1}
         defaultTime="12:00"
       />
@@ -257,7 +259,7 @@ const styles = StyleSheet.create({
   wideFrame: { paddingHorizontal: 28, paddingTop: 18 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingTop: 8 },
   eyebrow: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.accent },
-  headline: { fontFamily: fonts.display, fontSize: 40, color: colors.text, textTransform: 'uppercase', marginTop: 2 },
+  headline: { fontFamily: fonts.display, fontSize: 34, color: colors.text, marginTop: 2 },
   editButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, borderWidth: 1, borderColor: colors.lineStrong },
   editButtonActive: { borderColor: neon.line, backgroundColor: colors.surface2, ...glow(10, 0.5) },
   editText: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.textDim },
@@ -265,7 +267,7 @@ const styles = StyleSheet.create({
   editHint: { fontFamily: fonts.body, fontSize: 12.5, color: neon.bright, marginBottom: 8, paddingHorizontal: 2 },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30, gap: 10 },
-  emptyTitle: { fontFamily: fonts.display, fontSize: 28, color: colors.text, textTransform: 'uppercase' },
+  emptyTitle: { fontFamily: fonts.display, fontSize: 24, color: colors.text },
   emptyText: { color: colors.textDim, fontFamily: fonts.body, textAlign: 'center', lineHeight: 20, maxWidth: 340 },
   emptyButton: { marginTop: 8, backgroundColor: neon.line, borderRadius: 12, paddingVertical: 13, paddingHorizontal: 26, ...glow(16, 0.7) },
   emptyButtonText: { fontFamily: fonts.bodyBold, fontSize: 15, color: '#FFFFFF' },
@@ -288,7 +290,7 @@ const styles = StyleSheet.create({
   dayPillText: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.textDim },
   todayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: 'transparent' },
   dayHeader: { borderBottomWidth: 2, paddingBottom: 10, marginBottom: 6 },
-  dayName: { fontFamily: fonts.display, fontSize: 28, textTransform: 'uppercase' },
+  dayName: { fontFamily: fonts.display, fontSize: 24 },
   dayType: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: colors.textFaint, marginTop: 3 },
   // Sin padding vertical en la fila: así la línea de cada fila empalma con la siguiente sin cortes.
   item: { flexDirection: 'row', gap: 10, borderRadius: 10 },
@@ -322,7 +324,7 @@ const styles = StyleSheet.create({
   },
   columnToday: { borderColor: neon.line, ...glow(16, 0.35) },
   columnHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 2, paddingBottom: 6, paddingHorizontal: 4 },
-  columnDay: { fontFamily: fonts.display, fontSize: 18, textTransform: 'uppercase' },
+  columnDay: { fontFamily: fonts.display, fontSize: 16 },
   todayTag: { fontFamily: fonts.label, fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: neon.bright },
   columnLabel: { fontFamily: fonts.label, fontSize: 10, color: colors.textFaint, textTransform: 'uppercase', paddingHorizontal: 4, marginBottom: 4, minHeight: 26 },
   card: {

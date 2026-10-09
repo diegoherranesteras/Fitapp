@@ -1,5 +1,6 @@
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { colors, fonts } from '../lib/theme';
+import { useI18n } from '../lib/i18n';
 
 interface Props {
   trainedDates: Set<string>; // 'YYYY-MM-DD'
@@ -13,6 +14,7 @@ function isoOf(d: Date) {
 }
 
 export default function YearHeatmap({ trainedDates }: Props) {
+  const { t } = useI18n();
   const today = new Date();
   const start = new Date(today);
   start.setDate(start.getDate() - 364);
@@ -63,7 +65,7 @@ export default function YearHeatmap({ trainedDates }: Props) {
           ))}
         </View>
       </ScrollView>
-      <Text style={styles.caption}>{total} días entrenados en el último año</Text>
+      <Text style={styles.caption}>{t('progress.trainedDays', { n: total })}</Text>
     </View>
   );
 }

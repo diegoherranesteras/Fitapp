@@ -5,6 +5,7 @@ import { colors, fonts } from '../lib/theme';
 import type { MacroReference, MacroTargets } from '../lib/types';
 import Sheet, { sheetText } from './Sheet';
 import PressableScale from './PressableScale';
+import { useI18n, type StringKey } from '../lib/i18n';
 
 interface Props {
   visible: boolean;
@@ -17,17 +18,17 @@ interface Props {
 
 type FieldKey = Exclude<keyof MacroTargets, 'user_id'>;
 
-const FIELDS: { key: FieldKey; label: string; unit: string }[] = [
-  { key: 'calories', label: 'Calorías', unit: 'kcal' },
-  { key: 'protein_g', label: 'Proteína', unit: 'g' },
-  { key: 'carbs_g', label: 'Carbohidratos', unit: 'g' },
-  { key: 'fat_g', label: 'Grasas', unit: 'g' },
-  { key: 'fiber_g', label: 'Fibra', unit: 'g' },
-  { key: 'sodium_mg', label: 'Sodio', unit: 'mg' },
-  { key: 'potassium_mg', label: 'Potasio', unit: 'mg' },
-  { key: 'calcium_mg', label: 'Calcio', unit: 'mg' },
-  { key: 'iron_mg', label: 'Hierro', unit: 'mg' },
-  { key: 'vitamin_d_mcg', label: 'Vitamina D', unit: 'mcg' },
+const FIELDS: { key: FieldKey; label: StringKey; unit: string }[] = [
+  { key: 'calories', label: 'macros.calories', unit: 'kcal' },
+  { key: 'protein_g', label: 'macros.protein', unit: 'g' },
+  { key: 'carbs_g', label: 'macros.carbsLong', unit: 'g' },
+  { key: 'fat_g', label: 'macros.fat', unit: 'g' },
+  { key: 'fiber_g', label: 'macros.fiber', unit: 'g' },
+  { key: 'sodium_mg', label: 'macros.sodium', unit: 'mg' },
+  { key: 'potassium_mg', label: 'macros.potassium', unit: 'mg' },
+  { key: 'calcium_mg', label: 'macros.calcium', unit: 'mg' },
+  { key: 'iron_mg', label: 'macros.iron', unit: 'mg' },
+  { key: 'vitamin_d_mcg', label: 'macros.vitaminD', unit: 'mcg' },
 ];
 
 function toStrings(source: Record<FieldKey, number>) {
@@ -37,6 +38,7 @@ function toStrings(source: Record<FieldKey, number>) {
 }
 
 export default function EditMacrosModal({ visible, onClose, userId, current, reference, onSaved }: Props) {
+  const { t } = useI18n();
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -63,13 +65,13 @@ export default function EditMacrosModal({ visible, onClose, userId, current, ref
 
   return (
     <Sheet visible={visible} onClose={onClose}>
-          <Text style={sheetText.kicker}>Macros</Text>
-          <Text style={[sheetText.title, { marginBottom: 14 }]}>Tus objetivos</Text>
+          <Text style={sheetText.kicker}>{t('macros.editKicker')}</Text>
+          <Text style={[sheetText.title, { marginBottom: 14 }]}>{t('macros.editTitle')}</Text>
 
           <ScrollView style={{ flexShrink: 1 }}>
             {reference ? (
               <View style={styles.whyBox}>
-                <Text style={styles.whyTitle}>Recomendación para tu objetivo</Text>
+                <Text style={styles.whyTitle}>{t('macros.reference')}</Text>
                 {reference.why.map((line) => (
                   <Text key={line} style={styles.whyLine}>· {line}</Text>
                 ))}
@@ -79,10 +81,10 @@ export default function EditMacrosModal({ visible, onClose, userId, current, ref
             {FIELDS.map((f) => (
               <View key={f.key} style={styles.row}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>{f.label}</Text>
+                  <Text style={styles.label}>{t(f.label)}</Text>
                   {reference ? (
                     <Text style={styles.recommended}>
-                      Recomendado: {reference[f.key]} {f.unit}
+                      {t('macros.recommended', { value: reference[f.key], unit: f.unit })}
                     </Text>
                   ) : null}
                 </View>
@@ -91,7 +93,7 @@ export default function EditMacrosModal({ visible, onClose, userId, current, ref
                     style={styles.input}
                     keyboardType="numeric"
                     value={values[f.key] ?? ''}
-                    onChangeText={(t) => setValues((prev) => ({ ...prev, [f.key]: t }))}
+                    onChangeText={(text) => setValues((prev) => ({ ...prev, [f.key]: text }))}
                   />
                   <Text style={styles.unit}>{f.unit}</Text>
                 </View>
@@ -101,19 +103,18 @@ export default function EditMacrosModal({ visible, onClose, userId, current, ref
 
           {mismatch ? (
             <Text style={styles.warning}>
-              Proteína, carbos y grasas suman {macroKcal} kcal, {kcalGap > 0 ? `${kcalGap} más` : `${-kcalGap} menos`} que
-              tu objetivo de calorías. Puedes guardarlo igual, pero no cuadra.
+              {t('macros.mismatch', { kcal: macroKcal, diff: kcalGap > 0 ? t('macros.more', { n: kcalGap }) : t('macros.less', { n: -kcalGap }) })}
             </Text>
           ) : null}
 
           {reference ? (
             <Pressable style={styles.resetButton} onPress={() => setValues(toStrings(reference))}>
-              <Text style={styles.resetText}>Volver a lo recomendado</Text>
+              <Text style={styles.resetText}>{t('macros.reset')}</Text>
             </Pressable>
           ) : null}
 
           <PressableScale style={styles.saveButton} onPress={save} disabled={saving}>
-            {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>Guardar</Text>}
+            {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>{t('common.save')}</Text>}
           </PressableScale>
     </Sheet>
   );

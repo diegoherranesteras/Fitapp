@@ -13,8 +13,11 @@ import {
 import { supabase } from '../../lib/supabase';
 import { colors, fonts, glow, neon } from '../../lib/theme';
 import PressableScale from '../../components/PressableScale';
+import { SettingsButton } from '../../components/SettingsSheet';
+import { useI18n } from '../../lib/i18n';
 
 export default function LoginScreen() {
+  const { t } = useI18n();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [focused, setFocused] = useState<'email' | 'password' | null>(null);
   const [email, setEmail] = useState('');
@@ -25,7 +28,7 @@ export default function LoginScreen() {
   async function submit() {
     setError(null);
     if (!email.trim() || !password) {
-      setError('Rellena email y contraseña.');
+      setError(t('login.fillBoth'));
       return;
     }
     setBusy(true);
@@ -36,7 +39,7 @@ export default function LoginScreen() {
     setBusy(false);
     if (err) setError(err.message);
     else if (mode === 'signup') {
-      setError('Cuenta creada. Si tu proyecto de Supabase pide confirmar el email, revisa tu bandeja antes de entrar.');
+      setError(t('login.created'));
     }
   }
 
@@ -52,11 +55,11 @@ export default function LoginScreen() {
       </View>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.eyebrow}>Rutina</Text>
-        <Text style={styles.title}>{mode === 'login' ? 'Entrar' : 'Crear cuenta'}</Text>
+        <Text style={styles.title}>{mode === 'login' ? t('login.title') : t('login.signupTitle')}</Text>
         <View style={styles.titleLine} />
 
         <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t('login.email')}</Text>
           <TextInput
             style={[styles.input, focused === 'email' && styles.inputFocused]}
             onFocus={() => setFocused('email')}
@@ -72,7 +75,7 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Contraseña</Text>
+          <Text style={styles.label}>{t('login.password')}</Text>
           <TextInput
             style={[styles.input, focused === 'password' && styles.inputFocused]}
             onFocus={() => setFocused('password')}
@@ -91,22 +94,26 @@ export default function LoginScreen() {
           {busy ? (
             <ActivityIndicator color={colors.bg} />
           ) : (
-            <Text style={styles.buttonText}>{mode === 'login' ? 'Entrar' : 'Crear cuenta'}</Text>
+            <Text style={styles.buttonText}>{mode === 'login' ? t('login.title') : t('login.signupTitle')}</Text>
           )}
         </PressableScale>
 
         <Pressable onPress={() => setMode(mode === 'login' ? 'signup' : 'login')}>
           <Text style={styles.switchText}>
-            {mode === 'login' ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Entra'}
+            {mode === 'login' ? t('login.toSignup') : t('login.toLogin')}
           </Text>
         </Pressable>
       </ScrollView>
+      <View style={styles.settings}>
+        <SettingsButton />
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
+  settings: { position: 'absolute', top: 54, right: 18 },
   // En el ordenador el formulario no se estira: columna estrecha y centrada.
   container: { flexGrow: 1, justifyContent: 'center', padding: 28, width: '100%', maxWidth: 440, alignSelf: 'center' },
   eyebrow: {
@@ -119,9 +126,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: 40,
+    fontSize: 34,
+    letterSpacing: -0.5,
     color: colors.text,
-    textTransform: 'uppercase',
   },
   titleLine: { height: 2, width: 96, borderRadius: 1, backgroundColor: neon.line, marginTop: 8, marginBottom: 32, ...glow(10, 0.9) },
   decor: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' },

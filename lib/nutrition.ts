@@ -1,4 +1,5 @@
 import type { Goal, MacroReference, OnboardingAnswers } from './types';
+import { knownLabel, translator, localeOf, type Lang, type StringKey } from './i18n';
 
 // Referencias usadas:
 // - Gasto basal: Mifflin-St Jeor; Katch-McArdle si se conoce el % de grasa (usa la masa magra).
@@ -13,21 +14,21 @@ export interface RateFeedback {
   level: RateLevel;
   pctPerWeek: number;
   monthlyKg: number;
-  message: string;
+  messageKey: StringKey;
 }
 
-const RATE_BANDS: Record<'muscle' | 'fat_loss', { max: number; level: RateLevel; message: string }[]> = {
+const RATE_BANDS: Record<'muscle' | 'fat_loss', { max: number; level: RateLevel }[]> = {
   muscle: [
-    { max: 0.1, level: 'slow', message: 'Muy lento: apenas vas a notar cambios.' },
-    { max: 0.5, level: 'ideal', message: 'Ritmo ideal: ganas músculo con la mínima grasa.' },
-    { max: 0.75, level: 'fast', message: 'Rápido: parte de lo que ganes será grasa.' },
-    { max: Infinity, level: 'too_fast', message: 'Demasiado: vas a ganar mucha grasa. El músculo no crece tan rápido.' },
+    { max: 0.1, level: 'slow' },
+    { max: 0.5, level: 'ideal' },
+    { max: 0.75, level: 'fast' },
+    { max: Infinity, level: 'too_fast' },
   ],
   fat_loss: [
-    { max: 0.25, level: 'slow', message: 'Lento: muy llevadero, pero tardarás en ver resultados.' },
-    { max: 1.0, level: 'ideal', message: 'Ritmo ideal: pierdes grasa manteniendo el músculo.' },
-    { max: 1.5, level: 'fast', message: 'Agresivo: riesgo de perder músculo y rendir peor.' },
-    { max: Infinity, level: 'too_fast', message: 'Demasiado: perderás músculo y lo vas a pasar mal.' },
+    { max: 0.25, level: 'slow' },
+    { max: 1.0, level: 'ideal' },
+    { max: 1.5, level: 'fast' },
+    { max: Infinity, level: 'too_fast' },
   ],
 };
 
@@ -38,7 +39,7 @@ export function goalHasRate(goal: Goal): goal is 'muscle' | 'fat_loss' {
 export function rateFeedback(goal: 'muscle' | 'fat_loss', rateKg: number, weightKg: number): RateFeedback {
   const pctPerWeek = (rateKg / weightKg) * 100;
   const band = RATE_BANDS[goal].find((b) => pctPerWeek < b.max)!;
-  return { level: band.level, pctPerWeek, monthlyKg: rateKg * 4.3, message: band.message };
+  return { level: band.level, pctPerWeek, monthlyKg: rateKg * 4.3, messageKey: `rate.${goal}.${band.level}` as StringKey };
 }
 
 export function recommendedRate(goal: 'muscle' | 'fat_loss', weightKg: number) {
@@ -58,9 +59,10 @@ const FAT_PCT = { muscle: 0.25, fat_loss: 0.25, performance: 0.22, maintain: 0.2
 
 const ACTIVITY_BASE = { sedentary: 1.2, light: 1.35, active: 1.5 } as const;
 
-const fmt = (n: number, decimals = 0) => n.toLocaleString('es-ES', { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
-
-export function computeMacros(a: OnboardingAnswers): MacroReference {
+// La explicación (why) se genera en el idioma de la app y se guarda tal cual con el plan.
+export function computeMacros(a: OnboardingAnswers, lang: Lang = 'es'): MacroReference {
+  const t = translator(lang);
+  const fmt = (n: number, decimals = 0) => n.toLocaleString(localeOf(lang), { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
   const leanMass = a.body_fat_pct != null ? a.weight_kg * (1 - a.body_fat_pct / 100) : null;
   const bmr = leanMass != null
     ? 370 + 21.6 * leanMass
@@ -86,32 +88,25 @@ export function computeMacros(a: OnboardingAnswers): MacroReference {
   const carbs_g = Math.max(0, Math.round((calories - protein_g * 4 - fat_g * 9) / 4));
 
   const why: string[] = [
-    `Tu gasto estimado es de unas ${fmt(maintenance)} kcal al día (${
-      leanMass != null ? 'fórmula de Katch-McArdle con tu % de grasa' : 'fórmula de Mifflin-St Jeor'
-    }, ajustada a tu actividad, ${a.gym_days} ${a.gym_days === 1 ? 'día' : 'días'} de gimnasio${
-      a.sport ? ` y ${fmt(sportHours, 1)} h semanales de ${a.sport.name.trim().toLowerCase()}` : ''
-    }).`,
+    t('why.maintenance', {
+      kcal: fmt(maintenance),
+      formula: t(leanMass != null ? 'why.formulaKatch' : 'why.formulaMifflin'),
+      gymDays: a.gym_days === 1 ? t('why.gymDays1') : t('why.gymDaysN', { n: a.gym_days }),
+      sport: a.sport ? t('why.sport', { hours: fmt(sportHours, 1), sport: lang === 'de' ? knownLabel(t, 'ob.sport', a.sport.name.trim()) : knownLabel(t, 'ob.sport', a.sport.name.trim()).toLowerCase() }) : '',
+    }),
   ];
-  if (a.goal === 'muscle') {
-    why.push(`Para ganar ${fmt(a.weekly_rate_kg, 2)} kg por semana comes ${fmt(delta)} kcal por encima de tu gasto.`);
-  } else if (a.goal === 'fat_loss') {
-    why.push(`Para perder ${fmt(a.weekly_rate_kg, 2)} kg por semana comes ${fmt(-delta)} kcal por debajo de tu gasto.`);
-  } else if (a.goal === 'performance') {
-    why.push('Ligero superávit del 5 % para rendir y recuperar entre sesiones.');
-  } else {
-    why.push('Calorías de mantenimiento: mismo peso, mejor composición con el entreno.');
-  }
-  if (calories !== unclamped) {
-    why.push(`Hemos subido las calorías a ${fmt(floor)}: por debajo no es seguro sin supervisión.`);
-  }
+  if (a.goal === 'muscle') why.push(t('why.gain', { rate: fmt(a.weekly_rate_kg, 2), kcal: fmt(delta) }));
+  else if (a.goal === 'fat_loss') why.push(t('why.lose', { rate: fmt(a.weekly_rate_kg, 2), kcal: fmt(-delta) }));
+  else if (a.goal === 'performance') why.push(t('why.performance'));
+  else why.push(t('why.maintain'));
+  if (calories !== unclamped) why.push(t('why.floor', { kcal: fmt(floor) }));
+  const cut = a.goal === 'fat_loss' ? t('why.proteinCut') : '';
   why.push(
-    leanMass != null
-      ? `Proteína: ${fmt(p.lean, 1)} g por kg de masa magra (${fmt(leanMass, 1)} kg).${a.goal === 'fat_loss' ? ' En déficit se sube para proteger el músculo.' : ''}`
-      : `Proteína: ${fmt(p.total, 1)} g por kg de peso.${a.goal === 'fat_loss' ? ' En déficit se sube para proteger el músculo.' : ''}`,
+    (leanMass != null
+      ? t('why.proteinLean', { g: fmt(p.lean, 1), lean: fmt(leanMass, 1) })
+      : t('why.proteinTotal', { g: fmt(p.total, 1) })) + cut,
   );
-  why.push(
-    `Grasa al ${Math.round(FAT_PCT[a.goal] * 100)} % de las calorías para tus hormonas; el resto, carbohidrato, que es el combustible del entreno.`,
-  );
+  why.push(t('why.fat', { pct: Math.round(FAT_PCT[a.goal] * 100) }));
 
   return {
     calories,

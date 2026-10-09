@@ -6,9 +6,12 @@ import { useAuth } from '../../lib/auth-context';
 import { colors, fonts, glow, neon } from '../../lib/theme';
 import PressableScale from '../../components/PressableScale';
 import Screen from '../../components/Screen';
+import { SettingsButton } from '../../components/SettingsSheet';
+import { useI18n } from '../../lib/i18n';
 
 export default function PerfilScreen() {
   const { session, refreshProfile } = useAuth();
+  const { t } = useI18n();
   const router = useRouter();
   const [name, setName] = useState('');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lb'>('kg');
@@ -55,17 +58,20 @@ export default function PerfilScreen() {
   return (
     <Screen maxWidth={560}>
       <View style={{ padding: 22 }}>
-        <Text style={styles.eyebrow}>Perfil</Text>
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>{t('profile.eyebrow')}</Text>
+          <SettingsButton />
+        </View>
         <Text style={styles.email}>{session?.user.email}</Text>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Nombre</Text>
-          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Tu nombre" placeholderTextColor={colors.textFaint} />
+          <Text style={styles.label}>{t('profile.name')}</Text>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder={t('profile.namePlaceholder')} placeholderTextColor={colors.textFaint} />
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Unidad de peso</Text>
-          <Text style={styles.unitHint}>Para tu peso corporal y los pesos de cada serie.</Text>
+          <Text style={styles.label}>{t('profile.unit')}</Text>
+          <Text style={styles.unitHint}>{t('profile.unitHint')}</Text>
           <View style={styles.unitRow}>
             {(['kg', 'lb'] as const).map((u) => (
               <PressableScale key={u} onPress={() => setWeightUnit(u)} style={[styles.unitButton, weightUnit === u && styles.unitButtonActive]}>
@@ -76,16 +82,16 @@ export default function PerfilScreen() {
         </View>
 
         <PressableScale style={styles.saveButton} onPress={save} disabled={saving}>
-          {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>{saved ? 'Guardado ✓' : 'Guardar'}</Text>}
+          {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>{saved ? t('common.saved') : t('common.save')}</Text>}
         </PressableScale>
 
         <PressableScale style={styles.redoButton} onPress={() => router.push('/onboarding')}>
-          <Text style={styles.redoText}>Rehacer mi plan</Text>
-          <Text style={styles.redoHint}>Vuelve a responder el cuestionario y te creamos una semana nueva con tus macros.</Text>
+          <Text style={styles.redoText}>{t('profile.redo')}</Text>
+          <Text style={styles.redoHint}>{t('profile.redoHint')}</Text>
         </PressableScale>
 
         <Pressable style={styles.signOutButton} onPress={() => supabase.auth.signOut()}>
-          <Text style={styles.signOutText}>Cerrar sesión</Text>
+          <Text style={styles.signOutText}>{t('profile.signOut')}</Text>
         </Pressable>
       </View>
     </Screen>
@@ -94,6 +100,7 @@ export default function PerfilScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   center: { alignItems: 'center', justifyContent: 'center' },
   eyebrow: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.accent },
   email: { fontFamily: fonts.body, fontSize: 14, color: colors.textDim, marginTop: 6, marginBottom: 24 },

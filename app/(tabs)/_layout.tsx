@@ -7,8 +7,8 @@ import { useIsWide } from '../../lib/layout';
 import { colors, fonts, glow, neon } from '../../lib/theme';
 import QuickAddSheet from '../../components/QuickAddSheet';
 import PressableScale from '../../components/PressableScale';
+import { useI18n, type StringKey } from '../../lib/i18n';
 
-const LABELS: Record<string, string> = { index: 'Rutina', macros: 'Macros', progreso: 'Progreso', perfil: 'Perfil' };
 
 // Lo mínimo que usamos de las props que el navegador de pestañas pasa a `tabBar`.
 interface NavProps {
@@ -19,6 +19,7 @@ interface NavProps {
 // Móvil: barra inferior con el + flotando en el centro, al alcance del pulgar.
 function BottomBar({ state, navigation, onAdd }: NavProps & { onAdd: () => void }) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   return (
     <View>
       <View style={[styles.bottomBar, { height: 58 + insets.bottom, paddingBottom: insets.bottom }]}>
@@ -36,14 +37,14 @@ function BottomBar({ state, navigation, onAdd }: NavProps & { onAdd: () => void 
               accessibilityState={{ selected: focused }}
             >
               <View style={[styles.indicator, focused && styles.indicatorActive]} />
-              <Text style={[styles.bottomLabel, focused && styles.labelActive]}>{LABELS[route.name].toUpperCase()}</Text>
+              <Text style={[styles.bottomLabel, focused && styles.labelActive]}>{t(`tab.${route.name}` as StringKey).toUpperCase()}</Text>
             </Pressable>,
           ];
         })}
       </View>
       <View style={[styles.fabWrap, { bottom: 22 + insets.bottom }]}>
         <View style={styles.fabRing}>
-          <PressableScale style={styles.fab} onPress={onAdd} accessibilityLabel="Registrar comida o peso">
+          <PressableScale style={styles.fab} onPress={onAdd} accessibilityLabel={t('tab.addLabel')}>
             <Text style={styles.fabPlus}>+</Text>
           </PressableScale>
         </View>
@@ -54,6 +55,7 @@ function BottomBar({ state, navigation, onAdd }: NavProps & { onAdd: () => void 
 
 // Ordenador: barra lateral con la marca, la navegación y el botón de registrar siempre visible.
 function SideBar({ state, navigation, onAdd }: NavProps & { onAdd: () => void }) {
+  const { t } = useI18n();
   return (
     <View style={styles.sideBar}>
       <Text style={styles.brand}>Rutina</Text>
@@ -70,7 +72,7 @@ function SideBar({ state, navigation, onAdd }: NavProps & { onAdd: () => void })
               style={(s) => [styles.sideItem, (s as { hovered?: boolean }).hovered && !focused && styles.sideItemHover, focused && styles.sideItemActive]}
             >
               <View style={[styles.sideIndicator, focused && styles.indicatorActive]} />
-              <Text style={[styles.sideLabel, focused && styles.labelActive]}>{LABELS[route.name]}</Text>
+              <Text style={[styles.sideLabel, focused && styles.labelActive]}>{t(`tab.${route.name}` as StringKey)}</Text>
             </Pressable>
           );
         })}
@@ -78,7 +80,7 @@ function SideBar({ state, navigation, onAdd }: NavProps & { onAdd: () => void })
       <View style={{ flex: 1 }} />
       <PressableScale style={styles.sideAdd} onPress={onAdd}>
         <Text style={styles.sideAddPlus}>+</Text>
-        <Text style={styles.sideAddText}>Registrar</Text>
+        <Text style={styles.sideAddText}>{t('tab.add')}</Text>
       </PressableScale>
     </View>
   );
@@ -149,7 +151,7 @@ const styles = StyleSheet.create({
     borderRightColor: neon.soft,
     ...glow(18, 0.25),
   },
-  brand: { fontFamily: fonts.display, fontSize: 34, color: colors.text, textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 10 },
+  brand: { fontFamily: fonts.display, fontSize: 28, color: colors.text, letterSpacing: -0.5, paddingHorizontal: 10 },
   brandLine: { height: 2, width: 56, marginLeft: 10, marginTop: 8, backgroundColor: neon.line, borderRadius: 1, ...glow(10, 0.9) },
   sideItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 10, borderRadius: 10 },
   sideItemHover: { backgroundColor: 'rgba(255,255,255,0.04)' },

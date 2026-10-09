@@ -36,7 +36,8 @@ export function glow(blur = 12, alpha = 0.6, color = '47,168,255') {
 }
 
 export const fonts = {
-  display: 'Anton_400Regular',
+  // Títulos y cifras grandes.
+  display: 'HankenGrotesk_800ExtraBold',
   body: 'HankenGrotesk_400Regular',
   bodyMedium: 'HankenGrotesk_600SemiBold',
   bodyBold: 'HankenGrotesk_700Bold',
@@ -56,12 +57,3 @@ export const dayAccents: Record<number, string> = {
   0: '#6F7885', // Sun
 };
 
-export const dayLabels: Record<number, string> = {
-  1: 'Lun',
-  2: 'Mar',
-  3: 'Mié',
-  4: 'Jue',
-  5: 'Vie',
-  6: 'Sáb',
-  0: 'Dom',
-};

@@ -8,6 +8,7 @@ import Sheet, { sheetText } from './Sheet';
 import PressableScale from './PressableScale';
 import Chip from './onboarding/Chip';
 import TimeStepper from './onboarding/TimeStepper';
+import { useI18n, type StringKey } from '../lib/i18n';
 
 export type BlockWithItems = RoutineBlock & { exercises: Exercise[]; meal_items: MealItem[] };
 
@@ -27,10 +28,10 @@ interface DraftExercise { id?: string; name: string; sets: number; reps: string;
 interface DraftMeal { id?: string; name: string; quantity: string }
 type Picking = { index: number | 'new' } | null;
 
-const CATEGORIES: { value: BlockCategory; label: string }[] = [
-  { value: 'train', label: 'Entreno' },
-  { value: 'meal', label: 'Comida' },
-  { value: 'rest', label: 'Otro' },
+const CATEGORIES: { value: BlockCategory; label: StringKey }[] = [
+  { value: 'train', label: 'editor.train' },
+  { value: 'meal', label: 'editor.meal' },
+  { value: 'rest', label: 'editor.rest' },
 ];
 
 // "4×6-8" → 4 series de "6-8"
@@ -40,6 +41,7 @@ function parseTarget(ex: Exercise): DraftExercise {
 }
 
 export default function BlockEditor({ visible, onClose, onSaved, block, dayId, dayName, nextSortOrder, defaultTime }: Props) {
+  const { t } = useI18n();
   const [time, setTime] = useState(defaultTime);
   const [category, setCategory] = useState<BlockCategory>('train');
   const [title, setTitle] = useState('');
@@ -88,9 +90,9 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
   }
 
   async function save() {
-    if (!title.trim()) return setError('Ponle un título al bloque.');
-    if (category === 'train' && exercises.some((e) => !e.name.trim() || !e.reps.trim())) return setError('Cada ejercicio necesita nombre y repeticiones.');
-    if (category === 'meal' && meals.some((m) => !m.name.trim())) return setError('Cada alimento necesita nombre.');
+    if (!title.trim()) return setError(t('editor.needTitle'));
+    if (category === 'train' && exercises.some((e) => !e.name.trim() || !e.reps.trim())) return setError(t('editor.needExercise'));
+    if (category === 'meal' && meals.some((m) => !m.name.trim())) return setError(t('editor.needFood'));
     setBusy(true);
     setError(null);
     try {
@@ -126,7 +128,7 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
       onClose();
     } catch (e) {
       setBusy(false);
-      setError(`No se pudo guardar: ${(e as Error).message}`);
+      setError(t('editor.saveError', { msg: (e as Error).message }));
     }
   }
 
@@ -136,7 +138,7 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
     setBusy(true);
     const { error: e } = await supabase.from('routine_blocks').delete().eq('id', block.id);
     setBusy(false);
-    if (e) return setError(`No se pudo borrar: ${e.message}`);
+    if (e) return setError(t('editor.deleteError', { msg: e.message }));
     onSaved();
     onClose();
   }
@@ -147,38 +149,38 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
         <ExercisePicker onBack={() => setPicking(null)} onPick={pick} replacing={picking.index !== 'new' ? exercises[picking.index]?.name : null} />
       ) : (
         <>
-          <Text style={sheetText.kicker}>{dayName} · {block ? 'Editar bloque' : 'Nuevo bloque'}</Text>
-          <Text style={sheetText.title} numberOfLines={1}>{title.trim() || 'Sin título'}</Text>
+          <Text style={sheetText.kicker}>{dayName} · {block ? t('editor.edit') : t('editor.new')}</Text>
+          <Text style={sheetText.title} numberOfLines={1}>{title.trim() || t('editor.untitled')}</Text>
 
           <ScrollView style={styles.body} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <View style={styles.topRow}>
               <View>
-                <Text style={styles.label}>Hora</Text>
+                <Text style={styles.label}>{t('editor.time')}</Text>
                 <TimeStepper value={time} onChange={setTime} />
               </View>
               <View style={{ flex: 1, minWidth: 200 }}>
-                <Text style={styles.label}>Tipo</Text>
+                <Text style={styles.label}>{t('editor.type')}</Text>
                 <View style={styles.chips}>
-                  {CATEGORIES.map((c) => <Chip key={c.value} label={c.label} selected={category === c.value} onPress={() => setCategory(c.value)} />)}
+                  {CATEGORIES.map((c) => <Chip key={c.value} label={t(c.label)} selected={category === c.value} onPress={() => setCategory(c.value)} />)}
                 </View>
               </View>
             </View>
 
-            <Text style={styles.label}>Título</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder={category === 'meal' ? 'Comida' : category === 'train' ? 'Gym · Pierna' : 'Clase'} placeholderTextColor={colors.textFaint} />
-            <Text style={styles.label}>Detalle (opcional)</Text>
-            <TextInput style={styles.input} value={subtitle} onChangeText={setSubtitle} placeholder={category === 'meal' ? 'arroz + pollo' : '60 min'} placeholderTextColor={colors.textFaint} />
+            <Text style={styles.label}>{t('editor.titleField')}</Text>
+            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder={t(category === 'meal' ? 'editor.placeholderMeal' : category === 'train' ? 'editor.placeholderTrain' : 'editor.placeholderRest')} placeholderTextColor={colors.textFaint} />
+            <Text style={styles.label}>{t('editor.detail')}</Text>
+            <TextInput style={styles.input} value={subtitle} onChangeText={setSubtitle} placeholder={t(category === 'meal' ? 'editor.placeholderDetailMeal' : 'editor.placeholderDetail')} placeholderTextColor={colors.textFaint} />
 
             {category === 'train' ? (
               <>
-                <Text style={styles.section}>Ejercicios</Text>
+                <Text style={styles.section}>{t('editor.exercises')}</Text>
                 {exercises.map((e, i) => (
                   <View key={`${e.id ?? 'new'}-${i}`} style={styles.exCard}>
                     <View style={styles.exTop}>
                       <Text style={styles.exIndex}>{String(i + 1).padStart(2, '0')}</Text>
-                      <Pressable style={{ flex: 1 }} onPress={() => setPicking({ index: i })} accessibilityLabel={`Cambiar ${e.name}`}>
+                      <Pressable style={{ flex: 1 }} onPress={() => setPicking({ index: i })} accessibilityLabel={t('editor.swapLabel', { name: e.name })}>
                         <Text style={styles.exName}>{e.name}</Text>
-                        <Text style={styles.exSwap}>Cambiar ejercicio ›</Text>
+                        <Text style={styles.exSwap}>{t('editor.swap')}</Text>
                       </Pressable>
                       <IconButton label="↑" onPress={() => moveExercise(i, -1)} disabled={i === 0} />
                       <IconButton label="↓" onPress={() => moveExercise(i, 1)} disabled={i === exercises.length - 1} />
@@ -189,33 +191,33 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
                         <IconButton label="−" onPress={() => updateExercise(i, { sets: Math.max(1, e.sets - 1) })} />
                         <Text style={styles.stepperValue}>{e.sets}</Text>
                         <IconButton label="+" onPress={() => updateExercise(i, { sets: Math.min(10, e.sets + 1) })} />
-                        <Text style={styles.stepperUnit}>series</Text>
+                        <Text style={styles.stepperUnit}>{t('editor.sets')}</Text>
                       </View>
                       <View style={styles.repsWrap}>
                         <TextInput style={[styles.input, styles.repsInput]} value={e.reps} onChangeText={(reps) => updateExercise(i, { reps })} placeholder="8-10" placeholderTextColor={colors.textFaint} />
-                        <Text style={styles.stepperUnit}>reps</Text>
+                        <Text style={styles.stepperUnit}>{t('editor.reps')}</Text>
                       </View>
                     </View>
                   </View>
                 ))}
                 <PressableScale style={styles.addButton} onPress={() => setPicking({ index: 'new' })}>
-                  <Text style={styles.addText}>+ Añadir ejercicio</Text>
+                  <Text style={styles.addText}>{t('editor.addExercise')}</Text>
                 </PressableScale>
               </>
             ) : null}
 
             {category === 'meal' ? (
               <>
-                <Text style={styles.section}>Alimentos</Text>
+                <Text style={styles.section}>{t('editor.foods')}</Text>
                 {meals.map((m, i) => (
                   <View key={`${m.id ?? 'new'}-${i}`} style={styles.mealRow}>
-                    <TextInput style={[styles.input, { flex: 2 }]} value={m.name} onChangeText={(name) => setMeals((list) => list.map((x, j) => (j === i ? { ...x, name } : x)))} placeholder="Alimento" placeholderTextColor={colors.textFaint} />
+                    <TextInput style={[styles.input, { flex: 2 }]} value={m.name} onChangeText={(name) => setMeals((list) => list.map((x, j) => (j === i ? { ...x, name } : x)))} placeholder={t('editor.food')} placeholderTextColor={colors.textFaint} />
                     <TextInput style={[styles.input, { flex: 1 }]} value={m.quantity} onChangeText={(quantity) => setMeals((list) => list.map((x, j) => (j === i ? { ...x, quantity } : x)))} placeholder="150 g" placeholderTextColor={colors.textFaint} />
                     <IconButton label="✕" danger onPress={() => setMeals((list) => list.filter((_, j) => j !== i))} />
                   </View>
                 ))}
                 <PressableScale style={styles.addButton} onPress={() => setMeals((list) => [...list, { name: '', quantity: '' }])}>
-                  <Text style={styles.addText}>+ Añadir alimento</Text>
+                  <Text style={styles.addText}>{t('editor.addFood')}</Text>
                 </PressableScale>
               </>
             ) : null}
@@ -226,11 +228,11 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
           <View style={styles.footer}>
             {block ? (
               <PressableScale wrapperStyle={{ flex: 1 }} style={[styles.delete, confirmDelete && styles.deleteConfirm]} onPress={remove} disabled={busy}>
-                <Text style={[styles.deleteText, confirmDelete && { color: colors.text }]}>{confirmDelete ? '¿Seguro? Pulsa otra vez' : 'Borrar'}</Text>
+                <Text style={[styles.deleteText, confirmDelete && { color: colors.text }]}>{confirmDelete ? t('common.confirmDelete') : t('common.delete')}</Text>
               </PressableScale>
             ) : null}
             <PressableScale wrapperStyle={{ flex: 2 }} style={styles.save} onPress={save} disabled={busy}>
-              {busy ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>Guardar</Text>}
+              {busy ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>{t('common.save')}</Text>}
             </PressableScale>
           </View>
         </>
@@ -264,6 +266,7 @@ async function syncChildren<T extends { id?: string }>(
 }
 
 function ExercisePicker({ onBack, onPick, replacing }: { onBack: () => void; onPick: (e: LibraryExercise | { name: string }) => void; replacing: string | null }) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<MuscleGroup | null>(null);
   const results = useMemo(() => searchExercises(query, group), [query, group]);
@@ -273,23 +276,23 @@ function ExercisePicker({ onBack, onPick, replacing }: { onBack: () => void; onP
   return (
     <>
       <Pressable onPress={onBack} hitSlop={10} style={{ alignSelf: 'flex-start' }}>
-        <Text style={styles.backLink}>‹ Volver</Text>
+        <Text style={styles.backLink}>{t('picker.back')}</Text>
       </Pressable>
-      <Text style={sheetText.title}>{replacing ? 'Cambiar ejercicio' : 'Añadir ejercicio'}</Text>
-      {replacing ? <Text style={sheetText.subtitle}>En lugar de {replacing}</Text> : null}
+      <Text style={sheetText.title}>{replacing ? t('picker.swapTitle') : t('picker.addTitle')}</Text>
+      {replacing ? <Text style={sheetText.subtitle}>{t('picker.insteadOf', { name: replacing })}</Text> : null}
 
-      <TextInput style={[styles.input, { marginTop: 14 }]} value={query} onChangeText={setQuery} placeholder="Buscar: press, remo, sentadilla…" placeholderTextColor={colors.textFaint} autoFocus />
+      <TextInput style={[styles.input, { marginTop: 14 }]} value={query} onChangeText={setQuery} placeholder={t('picker.search')} placeholderTextColor={colors.textFaint} autoFocus />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupStrip} contentContainerStyle={{ gap: 6, paddingRight: 8 }}>
-        <Chip label="Todos" selected={!group} onPress={() => setGroup(null)} />
-        {MUSCLE_GROUPS.map((g) => <Chip key={g} label={g} selected={group === g} onPress={() => setGroup(group === g ? null : g)} />)}
+        <Chip label={t('picker.all')} selected={!group} onPress={() => setGroup(null)} />
+        {MUSCLE_GROUPS.map((g) => <Chip key={g} label={t(`group.${g}` as StringKey)} selected={group === g} onPress={() => setGroup(group === g ? null : g)} />)}
       </ScrollView>
 
       <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
         {custom && !exact ? (
           <PressableScale style={styles.resultRow} onPress={() => onPick({ name: custom })}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.resultName}>Usar «{custom}»</Text>
-              <Text style={styles.resultMeta}>Ejercicio propio</Text>
+              <Text style={styles.resultName}>{t('picker.useCustom', { name: custom })}</Text>
+              <Text style={styles.resultMeta}>{t('picker.custom')}</Text>
             </View>
             <Text style={styles.resultPlus}>+</Text>
           </PressableScale>
@@ -298,12 +301,12 @@ function ExercisePicker({ onBack, onPick, replacing }: { onBack: () => void; onP
           <PressableScale key={r.name} style={styles.resultRow} onPress={() => onPick(r)}>
             <View style={{ flex: 1 }}>
               <Text style={styles.resultName}>{r.name}</Text>
-              <Text style={styles.resultMeta}>{r.group} · {r.equipment} · {r.sets}×{r.reps}</Text>
+              <Text style={styles.resultMeta}>{t(`group.${r.group}` as StringKey)} · {t(`equipment.${r.equipment}` as StringKey)} · {r.sets}×{r.reps}</Text>
             </View>
             <Text style={styles.resultPlus}>{replacing ? '⇄' : '+'}</Text>
           </PressableScale>
         ))}
-        {results.length === 0 && !custom ? <Text style={styles.empty}>No hay ejercicios en este grupo.</Text> : null}
+        {results.length === 0 && !custom ? <Text style={styles.empty}>{t('picker.empty')}</Text> : null}
       </ScrollView>
     </>
   );

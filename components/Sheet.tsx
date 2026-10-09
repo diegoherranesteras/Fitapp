@@ -3,6 +3,7 @@ import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, glow } from '../lib/theme';
 import { useIsWide } from '../lib/layout';
+import { useI18n } from '../lib/i18n';
 
 interface Props {
   visible: boolean;
@@ -16,13 +17,14 @@ interface Props {
 export default function Sheet({ visible, onClose, children }: Props) {
   const wide = useIsWide();
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   return (
     <Modal visible={visible} transparent animationType={wide ? 'fade' : 'slide'} onRequestClose={onClose}>
       <View style={[styles.overlay, wide && styles.overlayWide]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Cerrar" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('common.close')} />
         <View style={[styles.sheet, wide ? styles.sheetWide : { paddingBottom: 22 + insets.bottom }]}>
           {wide ? null : <View style={styles.handle} />}
-          <Pressable style={styles.close} onPress={onClose} hitSlop={12} accessibilityLabel="Cerrar">
+          <Pressable style={styles.close} onPress={onClose} hitSlop={12} accessibilityLabel={t('common.close')}>
             <Text style={styles.closeText}>✕</Text>
           </Pressable>
           {children}
@@ -36,7 +38,7 @@ export default function Sheet({ visible, onClose, children }: Props) {
 // cuando el contenido no cabe, lo que se encoge es el ScrollView de debajo, nunca la cabecera.
 export const sheetText = StyleSheet.create({
   kicker: { flexShrink: 0, fontFamily: fonts.label, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: colors.accent },
-  title: { flexShrink: 0, fontFamily: fonts.display, fontSize: 26, color: colors.text, textTransform: 'uppercase', marginTop: 4, paddingRight: 36 },
+  title: { flexShrink: 0, fontFamily: fonts.display, fontSize: 22, color: colors.text, marginTop: 4, paddingRight: 36 },
   subtitle: { flexShrink: 0, fontFamily: fonts.body, fontSize: 13, color: colors.textDim, marginTop: 4 },
 });
 

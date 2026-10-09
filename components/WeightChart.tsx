@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
 import { colors, fonts, neon } from '../lib/theme';
 import type { WeightLog } from '../lib/types';
+import { useI18n } from '../lib/i18n';
 
 interface Props {
   logs: WeightLog[]; // ordenados por fecha ascendente
@@ -11,10 +12,11 @@ interface Props {
 }
 
 export default function WeightChart({ logs, width, height, unit = 'kg' }: Props) {
+  const { t } = useI18n();
   if (logs.length === 0) {
     return (
       <View style={[styles.empty, { width, height }]}>
-        <Text style={styles.emptyText}>Registra tu peso para ver la evolución aquí.</Text>
+        <Text style={styles.emptyText}>{t('progress.chartEmpty')}</Text>
       </View>
     );
   }

@@ -8,6 +8,7 @@ import { colors, fonts } from '../lib/theme';
 import type { Exercise, MealItem, RoutineBlock } from '../lib/types';
 import Sheet, { sheetText } from './Sheet';
 import PressableScale from './PressableScale';
+import { useI18n } from '../lib/i18n';
 
 type BlockWithItems = RoutineBlock & { exercises?: Exercise[]; meal_items?: MealItem[] };
 
@@ -36,6 +37,7 @@ function formatShort(iso: string) {
 }
 
 export default function ExerciseSheet({ visible, onClose, block, userId }: Props) {
+  const { t } = useI18n();
   const { weightUnit } = useAuth();
   const [loading, setLoading] = useState(false);
   // Última sesión anterior a hoy, por nombre de ejercicio: sobrevive a rehacer el plan o cambiar ejercicios.
@@ -119,7 +121,7 @@ export default function ExerciseSheet({ visible, onClose, block, userId }: Props
         setSaving(false);
         setError(
           err.message.includes('exercise_name')
-            ? 'Falta actualizar la base de datos: ejecuta supabase/migrations/003_set_history.sql en Supabase.'
+            ? t('sheet.needMigration')
             : err.message,
         );
         return;
@@ -142,7 +144,7 @@ export default function ExerciseSheet({ visible, onClose, block, userId }: Props
   return (
     <Sheet visible={visible} onClose={onClose}>
       <Text style={sheetText.kicker}>
-        {block.time} · {isTrain ? 'Entreno' : block.category === 'meal' ? 'Comida' : 'Bloque'}
+        {block.time} · {isTrain ? t('sheet.train') : block.category === 'meal' ? t('sheet.meal') : t('sheet.block')}
       </Text>
       <Text style={sheetText.title}>{block.title}</Text>
       {block.subtitle ? <Text style={sheetText.subtitle}>{block.subtitle}</Text> : null}
@@ -191,7 +193,7 @@ export default function ExerciseSheet({ visible, onClose, block, userId }: Props
                       })}
                     </View>
                     <Text style={styles.refText}>
-                      {prev ? `Última vez (${formatShort(prev.date)}) en gris · ${weightUnit}` : `Primera vez: apunta tus pesos en ${weightUnit}`}
+                      {prev ? t('sheet.lastTime', { date: formatShort(prev.date), unit: weightUnit }) : t('sheet.firstTime', { unit: weightUnit })}
                     </Text>
                   </>
                 ) : null}
@@ -212,7 +214,7 @@ export default function ExerciseSheet({ visible, onClose, block, userId }: Props
             <ActivityIndicator color={colors.bg} />
           ) : (
             <Text style={styles.saveText}>
-              {saved ? 'Guardado ✓' : loggable.length > 0 ? 'Guardar pesos de hoy' : 'Marcar entreno de hoy'}
+              {saved ? t('common.saved') : loggable.length > 0 ? t('sheet.saveWeights') : t('sheet.markTrained')}
             </Text>
           )}
         </PressableScale>

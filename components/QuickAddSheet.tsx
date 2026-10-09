@@ -7,6 +7,7 @@ import { parseWeight } from '../lib/units';
 import { colors, fonts, neon } from '../lib/theme';
 import Sheet, { sheetText } from './Sheet';
 import PressableScale from './PressableScale';
+import { useI18n } from '../lib/i18n';
 
 interface Props {
   visible: boolean;
@@ -22,14 +23,15 @@ function todayISO() {
 }
 
 const MACRO_FIELDS = [
-  { key: 'calories', label: 'Calorías', unit: 'kcal', color: neon.bright },
-  { key: 'protein', label: 'Proteína', unit: 'g', color: colors.protein },
-  { key: 'carbs', label: 'Carbos', unit: 'g', color: colors.carbs },
-  { key: 'fat', label: 'Grasas', unit: 'g', color: colors.fat },
+  { key: 'calories', label: 'macros.calories', unit: 'kcal', color: neon.bright },
+  { key: 'protein', label: 'macros.protein', unit: 'g', color: colors.protein },
+  { key: 'carbs', label: 'macros.carbs', unit: 'g', color: colors.carbs },
+  { key: 'fat', label: 'macros.fat', unit: 'g', color: colors.fat },
 ] as const;
 type MacroKey = (typeof MACRO_FIELDS)[number]['key'];
 
 export default function QuickAddSheet({ visible, onClose, userId }: Props) {
+  const { t } = useI18n();
   const { weightUnit } = useAuth();
   const [step, setStep] = useState<Step>('menu');
   const [busy, setBusy] = useState(false);
@@ -51,7 +53,7 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
 
   async function saveFood() {
     if (!foodName.trim() || !macros.calories) {
-      setError('Pon al menos nombre y calorías.');
+      setError(t('add.needFood'));
       return;
     }
     setBusy(true);
@@ -74,7 +76,7 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
   async function saveWeight() {
     const kg = parseWeight(weight, weightUnit);
     if (kg == null) {
-      setError('Pon tu peso.');
+      setError(t('add.needWeight'));
       return;
     }
     setBusy(true);
@@ -92,20 +94,20 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
     <Sheet visible={visible} onClose={close}>
       {step === 'menu' && (
         <>
-          <Text style={sheetText.kicker}>Hoy</Text>
-          <Text style={[sheetText.title, { marginBottom: 16 }]}>Registrar</Text>
-          <Option icon="🍽️" title="Comida" hint="Lo que has comido fuera del plan o tal cual" onPress={() => setStep('food')} />
-          <Option icon="⚖️" title="Peso" hint="Mejor en ayunas, después del baño" onPress={() => setStep('weight')} />
+          <Text style={sheetText.kicker}>{t('add.kicker')}</Text>
+          <Text style={[sheetText.title, { marginBottom: 16 }]}>{t('add.title')}</Text>
+          <Option icon="🍽️" title={t('add.food')} hint={t('add.foodHint')} onPress={() => setStep('food')} />
+          <Option icon="⚖️" title={t('add.weight')} hint={t('add.weightHint')} onPress={() => setStep('weight')} />
         </>
       )}
 
       {step === 'food' && (
         <>
-          <Text style={sheetText.kicker}>Registrar</Text>
-          <Text style={[sheetText.title, { marginBottom: 16 }]}>Comida</Text>
+          <Text style={sheetText.kicker}>{t('add.title')}</Text>
+          <Text style={[sheetText.title, { marginBottom: 16 }]}>{t('add.food')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="Nombre (ej. Pechuga con arroz)"
+            placeholder={t('add.foodPlaceholder')}
             placeholderTextColor={colors.textFaint}
             value={foodName}
             onChangeText={setFoodName}
@@ -114,7 +116,7 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
           <View style={styles.grid}>
             {MACRO_FIELDS.map((f) => (
               <View key={f.key} style={styles.gridItem}>
-                <Text style={[styles.fieldLabel, { color: f.color }]}>{f.label}</Text>
+                <Text style={[styles.fieldLabel, { color: f.color }]}>{t(f.label)}</Text>
                 <View style={styles.fieldRow}>
                   <TextInput
                     style={[styles.input, styles.inputNumber]}
@@ -136,8 +138,8 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
 
       {step === 'weight' && (
         <>
-          <Text style={sheetText.kicker}>Registrar</Text>
-          <Text style={[sheetText.title, { marginBottom: 16 }]}>Peso de hoy</Text>
+          <Text style={sheetText.kicker}>{t('add.title')}</Text>
+          <Text style={[sheetText.title, { marginBottom: 16 }]}>{t('add.weightTitle')}</Text>
           <View style={styles.fieldRow}>
             <TextInput
               style={[styles.input, styles.bigInput]}
@@ -172,13 +174,14 @@ function Option({ icon, title, hint, onPress }: { icon: string; title: string; h
 }
 
 function Actions({ busy, onBack, onSave }: { busy: boolean; onBack: () => void; onSave: () => void }) {
+  const { t } = useI18n();
   return (
     <View style={styles.actions}>
       <PressableScale wrapperStyle={{ flex: 1 }} style={styles.back} onPress={onBack} disabled={busy}>
-        <Text style={styles.backText}>Atrás</Text>
+        <Text style={styles.backText}>{t('common.back')}</Text>
       </PressableScale>
       <PressableScale wrapperStyle={{ flex: 2 }} style={styles.save} onPress={onSave} disabled={busy}>
-        {busy ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>Guardar</Text>}
+        {busy ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>{t('common.save')}</Text>}
       </PressableScale>
     </View>
   );
@@ -217,7 +220,7 @@ const styles = StyleSheet.create({
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   inputNumber: { flex: 1, minWidth: 0, fontFamily: fonts.label },
   unit: { fontFamily: fonts.label, fontSize: 11, color: colors.textFaint, width: 28 },
-  bigInput: { flex: 1, fontFamily: fonts.display, fontSize: 40, paddingVertical: 8, textAlign: 'center' },
+  bigInput: { flex: 1, fontFamily: fonts.display, fontSize: 34, paddingVertical: 8, textAlign: 'center' },
   bigUnit: { fontFamily: fonts.label, fontSize: 16, color: colors.textDim, width: 34 },
   error: { color: colors.bloodBright, fontFamily: fonts.body, fontSize: 13, marginTop: 12 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 18 },

@@ -9,30 +9,31 @@ import type { FoodLog, MacroReference, MacroTargets } from '../../lib/types';
 import RingProgress from '../../components/RingProgress';
 import EditMacrosModal from '../../components/EditMacrosModal';
 import Screen from '../../components/Screen';
+import { useI18n, type StringKey } from '../../lib/i18n';
 
 function last7Dates() {
-  const out: { iso: string; label: string; dow: string }[] = [];
-  const dowLabels = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  const out: { iso: string; label: string; dow: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    out.push({ iso, label: String(d.getDate()), dow: dowLabels[d.getDay()] });
+    out.push({ iso, label: String(d.getDate()), dow: d.getDay() });
   }
   return out;
 }
 
-const MICROS: { key: keyof MacroTargets; label: string; unit: string }[] = [
-  { key: 'fiber_g', label: 'Fibra', unit: 'g' },
-  { key: 'sodium_mg', label: 'Sodio', unit: 'mg' },
-  { key: 'potassium_mg', label: 'Potasio', unit: 'mg' },
-  { key: 'calcium_mg', label: 'Calcio', unit: 'mg' },
-  { key: 'iron_mg', label: 'Hierro', unit: 'mg' },
-  { key: 'vitamin_d_mcg', label: 'Vitamina D', unit: 'mcg' },
+const MICROS: { key: keyof MacroTargets; label: StringKey; unit: string }[] = [
+  { key: 'fiber_g', label: 'macros.fiber', unit: 'g' },
+  { key: 'sodium_mg', label: 'macros.sodium', unit: 'mg' },
+  { key: 'potassium_mg', label: 'macros.potassium', unit: 'mg' },
+  { key: 'calcium_mg', label: 'macros.calcium', unit: 'mg' },
+  { key: 'iron_mg', label: 'macros.iron', unit: 'mg' },
+  { key: 'vitamin_d_mcg', label: 'macros.vitaminD', unit: 'mcg' },
 ];
 
 export default function MacrosScreen() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const dates = last7Dates();
   const [selectedDate, setSelectedDate] = useState(dates[dates.length - 1].iso);
   const [targets, setTargets] = useState<MacroTargets | null>(null);
@@ -109,7 +110,7 @@ export default function MacrosScreen() {
             const active = d.iso === selectedDate;
             return (
               <Pressable key={d.iso} onPress={() => setSelectedDate(d.iso)} style={styles.dateItem}>
-                <Text style={styles.dateDow}>{d.dow}</Text>
+                <Text style={styles.dateDow}>{t(`day.letter.${d.dow}` as StringKey)}</Text>
                 <View style={[styles.dateCircle, active && styles.dateCircleActive]}>
                   <Text style={[styles.dateNum, active && styles.dateNumActive]}>{d.label}</Text>
                 </View>
@@ -122,7 +123,7 @@ export default function MacrosScreen() {
           <RingProgress size={190} strokeWidth={14} progress={targets ? consumed.calories / targets.calories : 0} color={neon.line}>
             <Text style={styles.fire}>🔥</Text>
             <Text style={styles.ringNumber}>{Math.max(0, Math.round(calLeft))}</Text>
-            <Text style={styles.ringLabel}>Calorías restantes</Text>
+            <Text style={styles.ringLabel}>{t('macros.remaining')}</Text>
           </RingProgress>
           <Pressable style={styles.editButton} onPress={() => setEditOpen(true)}>
             <Text style={styles.editIcon}>✎</Text>
@@ -134,28 +135,28 @@ export default function MacrosScreen() {
             <RingProgress size={78} strokeWidth={7} progress={targets ? consumed.protein / targets.protein_g : 0} color={colors.protein}>
               <Text style={styles.smallRingNum}>{Math.max(0, Math.round(proteinLeft))}g</Text>
             </RingProgress>
-            <Text style={styles.smallRingLabel}>Proteína</Text>
+            <Text style={styles.smallRingLabel}>{t('macros.protein')}</Text>
           </View>
           <View style={styles.smallRingItem}>
             <RingProgress size={78} strokeWidth={7} progress={targets ? consumed.carbs / targets.carbs_g : 0} color={colors.carbs}>
               <Text style={styles.smallRingNum}>{Math.max(0, Math.round(carbsLeft))}g</Text>
             </RingProgress>
-            <Text style={styles.smallRingLabel}>Carbos</Text>
+            <Text style={styles.smallRingLabel}>{t('macros.carbs')}</Text>
           </View>
           <View style={styles.smallRingItem}>
             <RingProgress size={78} strokeWidth={7} progress={targets ? consumed.fat / targets.fat_g : 0} color={colors.fat}>
               <Text style={styles.smallRingNum}>{Math.max(0, Math.round(fatLeft))}g</Text>
             </RingProgress>
-            <Text style={styles.smallRingLabel}>Grasas</Text>
+            <Text style={styles.smallRingLabel}>{t('macros.fat')}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Micronutrientes · objetivo diario</Text>
+          <Text style={styles.sectionTitle}>{t('macros.micros')}</Text>
           <View style={styles.microGrid}>
             {MICROS.map((m) => (
               <View key={m.key} style={styles.microItem}>
-                <Text style={styles.microLabel}>{m.label}</Text>
+                <Text style={styles.microLabel}>{t(m.label)}</Text>
                 <Text style={styles.microValue}>
                   {targets ? targets[m.key] : '-'} {m.unit}
                 </Text>
@@ -165,9 +166,9 @@ export default function MacrosScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Registrado este día</Text>
+          <Text style={styles.sectionTitle}>{t('macros.logged')}</Text>
           {logs.length === 0 ? (
-            <Text style={styles.emptyText}>Nada registrado este día todavía. Usa el botón + para añadir comida.</Text>
+            <Text style={styles.emptyText}>{t('macros.empty')}</Text>
           ) : (
             logs.map((l) => (
               <View key={l.id} style={styles.logRow}>
@@ -179,7 +180,7 @@ export default function MacrosScreen() {
                   </Text>
                 </View>
                 <Pressable onPress={() => deleteLog(l.id)} hitSlop={8} style={[styles.logDelete, confirmId === l.id && styles.logDeleteArmed]} accessibilityLabel={`Borrar ${l.name}`}>
-                  <Text style={[styles.logDeleteText, confirmId === l.id && { color: colors.text }]}>{confirmId === l.id ? 'Borrar' : '✕'}</Text>
+                  <Text style={[styles.logDeleteText, confirmId === l.id && { color: colors.text }]}>{confirmId === l.id ? t('common.delete') : '✕'}</Text>
                 </Pressable>
               </View>
             ))
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
   dateNumActive: { color: neon.bright },
   ringSection: { alignItems: 'center', marginTop: 26, position: 'relative' },
   fire: { fontSize: 22 },
-  ringNumber: { fontFamily: fonts.display, fontSize: 40, color: colors.text, marginTop: 2 },
+  ringNumber: { fontFamily: fonts.display, fontSize: 34, color: colors.text, marginTop: 2 },
   ringLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.textDim, marginTop: 2 },
   editButton: { position: 'absolute', top: 0, right: 24, padding: 8 },
   editIcon: { color: colors.textDim, fontSize: 16 },

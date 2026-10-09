@@ -11,9 +11,11 @@ import type { WeightLog } from '../../lib/types';
 import WeightChart from '../../components/WeightChart';
 import YearHeatmap from '../../components/YearHeatmap';
 import Screen from '../../components/Screen';
+import { useI18n } from '../../lib/i18n';
 
 export default function ProgresoScreen() {
   const { session, weightUnit } = useAuth();
+  const { t } = useI18n();
   const wide = useIsWide();
   const { width } = useWindowDimensions();
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
@@ -55,29 +57,29 @@ export default function ProgresoScreen() {
   return (
     <Screen maxWidth={1100}>
       <ScrollView contentContainerStyle={{ padding: wide ? 28 : 18, paddingBottom: 130 }}>
-        <Text style={styles.eyebrow}>Progreso</Text>
-        {wide ? <Text style={styles.headline}>Tu evolución</Text> : null}
+        <Text style={styles.eyebrow}>{t('progress.eyebrow')}</Text>
+        {wide ? <Text style={styles.headline}>{t('progress.headline')}</Text> : null}
 
         <View style={[styles.grid, wide && styles.gridWide]}>
           <View style={[styles.card, wide && { flex: 1 }]}>
-            <Text style={styles.sectionTitle}>Peso</Text>
+            <Text style={styles.sectionTitle}>{t('progress.weight')}</Text>
             <View style={styles.weightRow}>
               <Text style={styles.weightNumber}>{current ? formatWeight(Number(current.weight_kg), weightUnit) : '–'}</Text>
               <Text style={styles.weightUnit}>{weightUnit}</Text>
               {change != null ? (
                 <Text style={[styles.change, { color: change >= 0 ? colors.carbs : colors.fat }]}>
-                  {change >= 0 ? '▲' : '▼'} {formatWeight(Math.abs(change), weightUnit)} {weightUnit} desde el {first.date.split('-').reverse().slice(0, 2).join('/')}
+                  {t('progress.since', { arrow: change >= 0 ? '▲' : '▼', value: formatWeight(Math.abs(change), weightUnit), unit: weightUnit, date: first.date.split('-').reverse().slice(0, 2).join('/') })}
                 </Text>
               ) : null}
             </View>
-            <Text style={styles.hint}>Registra tu peso con el botón +</Text>
+            <Text style={styles.hint}>{t('progress.hint')}</Text>
             <View style={{ marginTop: 14 }} onLayout={onChartLayout}>
               <WeightChart logs={chartLogs} width={chartWidth} height={wide ? 200 : 140} unit={weightUnit} />
             </View>
           </View>
 
           <View style={[styles.card, wide && { flex: 1 }]}>
-            <Text style={styles.sectionTitle}>Calendario anual</Text>
+            <Text style={styles.sectionTitle}>{t('progress.calendar')}</Text>
             <YearHeatmap trainedDates={trainedDates} />
           </View>
         </View>
@@ -90,13 +92,13 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   eyebrow: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.accent, marginBottom: 14 },
-  headline: { fontFamily: fonts.display, fontSize: 40, color: colors.text, textTransform: 'uppercase', marginTop: -10, marginBottom: 18 },
+  headline: { fontFamily: fonts.display, fontSize: 34, color: colors.text, marginTop: -10, marginBottom: 18 },
   grid: { gap: 16 },
   gridWide: { flexDirection: 'row', alignItems: 'flex-start' },
   card: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 16, minWidth: 0 },
   sectionTitle: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.accent, marginBottom: 10 },
   weightRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 },
-  weightNumber: { fontFamily: fonts.display, fontSize: 44, color: colors.text },
+  weightNumber: { fontFamily: fonts.display, fontSize: 38, color: colors.text },
   weightUnit: { fontFamily: fonts.body, fontSize: 16, color: colors.textDim },
   change: { fontFamily: fonts.label, fontSize: 11.5, marginLeft: 8 },
   hint: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint, marginTop: 2 },
