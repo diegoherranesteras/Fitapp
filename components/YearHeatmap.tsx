@@ -73,5 +73,5 @@ const styles = StyleSheet.create({
   cellEmpty: { backgroundColor: colors.surface2 },
   cellTrained: { backgroundColor: colors.blood },
   cellFuture: { backgroundColor: 'transparent' },
-  caption: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint, marginTop: 10 },
+  caption: { fontFamily: fonts.label, fontSize: 11, color: colors.textFaint, marginTop: 10 },
 });

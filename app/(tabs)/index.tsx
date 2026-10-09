@@ -97,7 +97,7 @@ export default function RutinaScreen() {
   if (loading) {
     content = (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.brass} />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   } else if (!days.length) {
@@ -186,7 +186,7 @@ export default function RutinaScreen() {
           <ScrollView
             style={styles.flex}
             contentContainerStyle={{ padding: 18, paddingBottom: 130 }}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.brass} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.accent} />}
           >
             <View style={[styles.dayHeader, { borderColor: dayAccents[selectedDow] }]}>
               <Text style={[styles.dayName, { color: dayAccents[selectedDow] }]}>{DAY_NAMES[selectedDow]}</Text>
@@ -256,17 +256,17 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   wideFrame: { paddingHorizontal: 28, paddingTop: 18 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingTop: 8 },
-  eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.brass },
-  headline: { fontFamily: fonts.display, fontSize: 40, color: colors.bone, textTransform: 'uppercase', marginTop: 2 },
+  eyebrow: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.accent },
+  headline: { fontFamily: fonts.display, fontSize: 40, color: colors.text, textTransform: 'uppercase', marginTop: 2 },
   editButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, borderWidth: 1, borderColor: colors.lineStrong },
   editButtonActive: { borderColor: neon.line, backgroundColor: colors.surface2, ...glow(10, 0.5) },
-  editText: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.boneDim },
+  editText: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.textDim },
   editTextActive: { color: neon.bright },
   editHint: { fontFamily: fonts.body, fontSize: 12.5, color: neon.bright, marginBottom: 8, paddingHorizontal: 2 },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 30, gap: 10 },
-  emptyTitle: { fontFamily: fonts.display, fontSize: 28, color: colors.bone, textTransform: 'uppercase' },
-  emptyText: { color: colors.boneDim, fontFamily: fonts.body, textAlign: 'center', lineHeight: 20, maxWidth: 340 },
+  emptyTitle: { fontFamily: fonts.display, fontSize: 28, color: colors.text, textTransform: 'uppercase' },
+  emptyText: { color: colors.textDim, fontFamily: fonts.body, textAlign: 'center', lineHeight: 20, maxWidth: 340 },
   emptyButton: { marginTop: 8, backgroundColor: neon.line, borderRadius: 12, paddingVertical: 13, paddingHorizontal: 26, ...glow(16, 0.7) },
   emptyButtonText: { fontFamily: fonts.bodyBold, fontSize: 15, color: '#FFFFFF' },
 
@@ -285,16 +285,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   dayPillActive: { backgroundColor: colors.surface2, borderColor: neon.line, ...glow(10, 0.55) },
-  dayPillText: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.boneDim },
+  dayPillText: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.textDim },
   todayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: 'transparent' },
   dayHeader: { borderBottomWidth: 2, paddingBottom: 10, marginBottom: 6 },
   dayName: { fontFamily: fonts.display, fontSize: 28, textTransform: 'uppercase' },
-  dayType: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: colors.boneFaint, marginTop: 3 },
+  dayType: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: colors.textFaint, marginTop: 3 },
   // Sin padding vertical en la fila: así la línea de cada fila empalma con la siguiente sin cortes.
   item: { flexDirection: 'row', gap: 10, borderRadius: 10 },
-  itemPressed: { backgroundColor: 'rgba(242,232,219,0.04)' },
+  itemPressed: { backgroundColor: 'rgba(255,255,255,0.04)' },
   itemNow: { backgroundColor: 'rgba(47,168,255,0.07)' },
-  itemTime: { fontFamily: fonts.mono, fontSize: 12, color: colors.boneFaint, width: 42, paddingVertical: 12, paddingLeft: 2 },
+  itemTime: { fontFamily: fonts.label, fontSize: 12, color: colors.textFaint, width: 42, paddingVertical: 12, paddingLeft: 2 },
   rail: { width: 12, alignItems: 'center' },
   railLine: { position: 'absolute', top: 0, bottom: 0, width: 2, borderRadius: 1, backgroundColor: neon.soft, ...glow(6, 0.6) },
   railLineFirst: { top: 18 },
@@ -302,10 +302,10 @@ const styles = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 14, borderWidth: 2, borderColor: colors.bg },
   dotNow: { width: 14, height: 14, borderRadius: 7, marginTop: 12, backgroundColor: neon.bright, ...glow(12, 1) },
   itemBody: { flex: 1, paddingVertical: 10 },
-  nowTag: { fontFamily: fonts.mono, fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: neon.bright, marginBottom: 2 },
-  itemTitle: { fontFamily: fonts.bodyBold, fontSize: 14.5, color: colors.bone },
-  itemSubtitle: { fontFamily: fonts.body, fontSize: 12.5, color: colors.boneDim, marginTop: 1 },
-  chevron: { color: colors.boneFaint, fontSize: 18, paddingVertical: 10, paddingRight: 6 },
+  nowTag: { fontFamily: fonts.label, fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: neon.bright, marginBottom: 2 },
+  itemTitle: { fontFamily: fonts.bodyBold, fontSize: 14.5, color: colors.text },
+  itemSubtitle: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textDim, marginTop: 1 },
+  chevron: { color: colors.textFaint, fontSize: 18, paddingVertical: 10, paddingRight: 6 },
   editGlyph: { color: neon.bright, fontSize: 15, paddingVertical: 12, paddingRight: 8 },
   addRow: { marginTop: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: neon.soft, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
 
@@ -323,8 +323,8 @@ const styles = StyleSheet.create({
   columnToday: { borderColor: neon.line, ...glow(16, 0.35) },
   columnHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 2, paddingBottom: 6, paddingHorizontal: 4 },
   columnDay: { fontFamily: fonts.display, fontSize: 18, textTransform: 'uppercase' },
-  todayTag: { fontFamily: fonts.mono, fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: neon.bright },
-  columnLabel: { fontFamily: fonts.mono, fontSize: 10, color: colors.boneFaint, textTransform: 'uppercase', paddingHorizontal: 4, marginBottom: 4, minHeight: 26 },
+  todayTag: { fontFamily: fonts.label, fontSize: 9.5, letterSpacing: 1.5, textTransform: 'uppercase', color: neon.bright },
+  columnLabel: { fontFamily: fonts.label, fontSize: 10, color: colors.textFaint, textTransform: 'uppercase', paddingHorizontal: 4, marginBottom: 4, minHeight: 26 },
   card: {
     borderRadius: 10,
     paddingVertical: 8,
@@ -332,24 +332,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface2,
     borderLeftWidth: 3,
   },
-  cardHover: { backgroundColor: '#45222A' },
+  cardHover: { backgroundColor: '#1C2129' },
   cardEditing: { borderStyle: 'dashed', borderWidth: 1, borderLeftWidth: 3, borderColor: neon.soft },
   cardNow: { backgroundColor: 'rgba(47,168,255,0.13)', ...glow(10, 0.4) },
-  cardTime: { fontFamily: fonts.mono, fontSize: 10.5, color: colors.boneFaint },
-  cardTitle: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.bone, marginTop: 1 },
-  cardSub: { fontFamily: fonts.body, fontSize: 11.5, color: colors.boneDim, marginTop: 1 },
+  cardTime: { fontFamily: fonts.label, fontSize: 10.5, color: colors.textFaint },
+  cardTitle: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.text, marginTop: 1 },
+  cardSub: { fontFamily: fonts.body, fontSize: 11.5, color: colors.textDim, marginTop: 1 },
   addCard: { borderWidth: 1, borderStyle: 'dashed', borderColor: neon.soft, borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 2 },
   addCardText: { fontFamily: fonts.bodyBold, fontSize: 13, color: neon.bright },
 });
 
 const DOTS = {
-  meal: { backgroundColor: colors.brass, ...glow(8, 0.7, '207,166,78') },
+  meal: { backgroundColor: colors.accent, ...glow(8, 0.7, '61,139,255') },
   train: { backgroundColor: colors.blood, ...glow(8, 0.8, '218,64,48') },
-  rest: { backgroundColor: colors.boneFaint },
+  rest: { backgroundColor: colors.textFaint },
 };
 
 const CARD_ACCENT = {
-  meal: { borderLeftColor: colors.brass },
+  meal: { borderLeftColor: colors.accent },
   train: { borderLeftColor: colors.blood },
-  rest: { borderLeftColor: colors.boneFaint, backgroundColor: 'transparent' },
+  rest: { borderLeftColor: colors.textFaint, backgroundColor: 'transparent' },
 };

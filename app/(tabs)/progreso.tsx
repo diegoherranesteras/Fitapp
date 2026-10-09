@@ -46,7 +46,7 @@ export default function ProgresoScreen() {
     return (
       <Screen>
         <View style={[styles.flex, styles.center]}>
-          <ActivityIndicator color={colors.brass} />
+          <ActivityIndicator color={colors.accent} />
         </View>
       </Screen>
     );
@@ -89,15 +89,15 @@ export default function ProgresoScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
-  eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.brass, marginBottom: 14 },
-  headline: { fontFamily: fonts.display, fontSize: 40, color: colors.bone, textTransform: 'uppercase', marginTop: -10, marginBottom: 18 },
+  eyebrow: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.accent, marginBottom: 14 },
+  headline: { fontFamily: fonts.display, fontSize: 40, color: colors.text, textTransform: 'uppercase', marginTop: -10, marginBottom: 18 },
   grid: { gap: 16 },
   gridWide: { flexDirection: 'row', alignItems: 'flex-start' },
   card: { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 16, minWidth: 0 },
-  sectionTitle: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.brass, marginBottom: 10 },
+  sectionTitle: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.accent, marginBottom: 10 },
   weightRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 },
-  weightNumber: { fontFamily: fonts.display, fontSize: 44, color: colors.bone },
-  weightUnit: { fontFamily: fonts.body, fontSize: 16, color: colors.boneDim },
-  change: { fontFamily: fonts.mono, fontSize: 11.5, marginLeft: 8 },
-  hint: { fontFamily: fonts.body, fontSize: 12, color: colors.boneFaint, marginTop: 2 },
+  weightNumber: { fontFamily: fonts.display, fontSize: 44, color: colors.text },
+  weightUnit: { fontFamily: fonts.body, fontSize: 16, color: colors.textDim },
+  change: { fontFamily: fonts.label, fontSize: 11.5, marginLeft: 8 },
+  hint: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint, marginTop: 2 },
 });

@@ -30,9 +30,9 @@ const ACTIVITY: { value: DailyActivity; label: string; hint: string }[] = [
 ];
 const SPORTS = ['Boxeo', 'Fútbol', 'Pádel', 'Running', 'Baloncesto', 'Natación', 'Artes marciales', 'Ciclismo'];
 const RATE_COLORS: Record<RateLevel, string> = {
-  slow: colors.boneDim,
+  slow: colors.textDim,
   ideal: colors.good,
-  fast: colors.brassBright,
+  fast: colors.accentBright,
   too_fast: colors.bloodBright,
 };
 const STEPS = ['Tú', 'Objetivo', 'Horario', 'Deporte', 'Gimnasio', 'Resumen'];
@@ -418,7 +418,7 @@ export default function OnboardingScreen() {
                     value={SPORTS.includes(sportName) ? '' : draft.sport_name}
                     onChangeText={(v) => set('sport_name', v)}
                     placeholder="¿Otro? Escríbelo aquí"
-                    placeholderTextColor={colors.boneFaint}
+                    placeholderTextColor={colors.textFaint}
                     maxLength={40}
                   />
                   <Label>¿Qué días?</Label>
@@ -587,7 +587,7 @@ function NumberField({ label, unit, value, onChange }: { label: string; unit: st
     <View style={{ flex: 1 }}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.numberWrap}>
-        <TextInput style={styles.numberInput} keyboardType="decimal-pad" value={value} onChangeText={onChange} placeholder="–" placeholderTextColor={colors.boneFaint} />
+        <TextInput style={styles.numberInput} keyboardType="decimal-pad" value={value} onChangeText={onChange} placeholder="–" placeholderTextColor={colors.textFaint} />
         <Text style={styles.unit}>{unit}</Text>
       </View>
     </View>
@@ -611,11 +611,11 @@ const styles = StyleSheet.create({
   progressWrap: { flexDirection: 'row', gap: 6, paddingHorizontal: 22, paddingTop: 10 },
   progressBar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.surface2 },
   progressBarActive: { backgroundColor: neon.line, ...glow(8, 0.7) },
-  eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: colors.brass, marginTop: 8 },
-  title: { fontFamily: fonts.display, fontSize: 34, color: colors.bone, textTransform: 'uppercase', marginTop: 6, marginBottom: 8 },
-  label: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.bone, marginTop: 20, marginBottom: 10 },
+  eyebrow: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: colors.accent, marginTop: 8 },
+  title: { fontFamily: fonts.display, fontSize: 34, color: colors.text, textTransform: 'uppercase', marginTop: 6, marginBottom: 8 },
+  label: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.text, marginTop: 20, marginBottom: 10 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  hint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.boneFaint, marginTop: 10, lineHeight: 18 },
+  hint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textFaint, marginTop: 10, lineHeight: 18 },
   inputsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   numberWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   numberInput: {
@@ -627,8 +627,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: colors.bone,
-    fontFamily: fonts.mono,
+    color: colors.text,
+    fontFamily: fonts.label,
     fontSize: 16,
   },
   textInput: {
@@ -639,14 +639,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 11,
-    color: colors.bone,
+    color: colors.text,
     fontFamily: fonts.body,
     fontSize: 15,
   },
-  unit: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint },
+  unit: { fontFamily: fonts.label, fontSize: 11, color: colors.textFaint },
   card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 16, marginTop: 16 },
   hoursRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 18, marginTop: 14 },
-  hoursLabel: { fontFamily: fonts.mono, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', color: colors.boneFaint, marginBottom: 6 },
+  hoursLabel: { fontFamily: fonts.label, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', color: colors.textFaint, marginBottom: 6 },
   dayHours: { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.line },
   dayHoursName: { fontFamily: fonts.bodyBold, fontSize: 13 },
   rateRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 18 },
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roundButtonText: { color: colors.bone, fontSize: 22, fontFamily: fonts.bodyBold, marginTop: -2 },
+  roundButtonText: { color: colors.text, fontSize: 22, fontFamily: fonts.bodyBold, marginTop: -2 },
   previewCard: {
     marginTop: 18,
     borderRadius: 14,
@@ -674,28 +674,28 @@ const styles = StyleSheet.create({
     padding: 14,
     ...glow(14, 0.3),
   },
-  previewTitle: { fontFamily: fonts.mono, fontSize: 10.5, letterSpacing: 1.5, textTransform: 'uppercase', color: neon.bright, marginBottom: 10 },
+  previewTitle: { fontFamily: fonts.label, fontSize: 10.5, letterSpacing: 1.5, textTransform: 'uppercase', color: neon.bright, marginBottom: 10 },
   previewRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   previewPill: { alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, backgroundColor: colors.surface2, minWidth: 58 },
   previewDay: { fontFamily: fonts.bodyBold, fontSize: 12.5 },
-  previewTime: { fontFamily: fonts.mono, fontSize: 12, color: colors.bone, marginTop: 2 },
+  previewTime: { fontFamily: fonts.label, fontSize: 12, color: colors.text, marginTop: 2 },
   option: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 14, marginBottom: 8 },
-  optionSelected: { borderColor: colors.brass },
-  optionTitle: { fontFamily: fonts.bodyMedium, fontSize: 14.5, color: colors.boneDim },
-  optionTitleSelected: { color: colors.brassBright },
-  optionHint: { fontFamily: fonts.body, fontSize: 12, color: colors.boneFaint, marginTop: 2 },
+  optionSelected: { borderColor: colors.accent },
+  optionTitle: { fontFamily: fonts.bodyMedium, fontSize: 14.5, color: colors.textDim },
+  optionTitleSelected: { color: colors.accentBright },
+  optionHint: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint, marginTop: 2 },
   weekRow: { flexDirection: 'row', alignItems: 'baseline', gap: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.line },
   weekDay: { fontFamily: fonts.bodyBold, fontSize: 13.5, width: 38 },
-  weekText: { flex: 1, fontFamily: fonts.mono, fontSize: 12.5, color: colors.bone, lineHeight: 18 },
-  weekRest: { color: colors.boneFaint },
+  weekText: { flex: 1, fontFamily: fonts.label, fontSize: 12.5, color: colors.text, lineHeight: 18 },
+  weekRest: { color: colors.textFaint },
   macroRow: { flexDirection: 'row', marginBottom: 10 },
-  macroValue: { fontFamily: fonts.display, fontSize: 22, color: colors.brassBright },
-  macroLabel: { fontFamily: fonts.body, fontSize: 11.5, color: colors.boneDim },
-  whyLine: { fontFamily: fonts.body, fontSize: 13, color: colors.boneDim, lineHeight: 19 },
+  macroValue: { fontFamily: fonts.display, fontSize: 22, color: colors.accentBright },
+  macroLabel: { fontFamily: fonts.body, fontSize: 11.5, color: colors.textDim },
+  whyLine: { fontFamily: fonts.body, fontSize: 13, color: colors.textDim, lineHeight: 19 },
   error: { fontFamily: fonts.body, fontSize: 13, color: colors.bloodBright, marginTop: 16, lineHeight: 19 },
   footer: { flexDirection: 'row', gap: 10, padding: 16, borderTopWidth: 1, borderTopColor: colors.line },
-  primary: { backgroundColor: colors.brass, borderRadius: 10, paddingVertical: 15, alignItems: 'center' },
+  primary: { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 15, alignItems: 'center' },
   primaryText: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.bg },
   secondary: { borderRadius: 10, paddingVertical: 15, alignItems: 'center', borderWidth: 1, borderColor: colors.lineStrong },
-  secondaryText: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.boneDim },
+  secondaryText: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.textDim },
 });

@@ -8,7 +8,6 @@ import {
   HankenGrotesk_600SemiBold,
   HankenGrotesk_700Bold,
 } from '@expo-google-fonts/hanken-grotesk';
-import { SpaceMono_400Regular, SpaceMono_700Bold } from '@expo-google-fonts/space-mono';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../lib/auth-context';
 import { colors } from '../lib/theme';
@@ -50,8 +49,6 @@ export default function RootLayout() {
     HankenGrotesk_400Regular,
     HankenGrotesk_600SemiBold,
     HankenGrotesk_700Bold,
-    SpaceMono_400Regular,
-    SpaceMono_700Bold,
   });
 
   useEffect(() => {

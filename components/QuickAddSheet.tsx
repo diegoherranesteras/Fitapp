@@ -106,7 +106,7 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
           <TextInput
             style={styles.input}
             placeholder="Nombre (ej. Pechuga con arroz)"
-            placeholderTextColor={colors.boneFaint}
+            placeholderTextColor={colors.textFaint}
             value={foodName}
             onChangeText={setFoodName}
             autoFocus
@@ -119,7 +119,7 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
                   <TextInput
                     style={[styles.input, styles.inputNumber]}
                     placeholder="0"
-                    placeholderTextColor={colors.boneFaint}
+                    placeholderTextColor={colors.textFaint}
                     keyboardType="decimal-pad"
                     value={macros[f.key]}
                     onChangeText={(v) => setMacros((m) => ({ ...m, [f.key]: v }))}
@@ -142,7 +142,7 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
             <TextInput
               style={[styles.input, styles.bigInput]}
               placeholder="0,0"
-              placeholderTextColor={colors.boneFaint}
+              placeholderTextColor={colors.textFaint}
               keyboardType="decimal-pad"
               value={weight}
               onChangeText={setWeight}
@@ -197,9 +197,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   optionIcon: { fontSize: 24 },
-  optionTitle: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.bone },
-  optionHint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.boneFaint, marginTop: 2 },
-  chevron: { color: colors.boneFaint, fontSize: 22 },
+  optionTitle: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.text },
+  optionHint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textFaint, marginTop: 2 },
+  chevron: { color: colors.textFaint, fontSize: 22 },
   input: {
     backgroundColor: colors.surface2,
     borderWidth: 1,
@@ -207,22 +207,22 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: colors.bone,
+    color: colors.text,
     fontFamily: fonts.body,
     fontSize: 16,
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
   gridItem: { flexBasis: '47%', flexGrow: 1 },
-  fieldLabel: { fontFamily: fonts.mono, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 },
+  fieldLabel: { fontFamily: fonts.label, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 },
   fieldRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  inputNumber: { flex: 1, minWidth: 0, fontFamily: fonts.mono },
-  unit: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint, width: 28 },
+  inputNumber: { flex: 1, minWidth: 0, fontFamily: fonts.label },
+  unit: { fontFamily: fonts.label, fontSize: 11, color: colors.textFaint, width: 28 },
   bigInput: { flex: 1, fontFamily: fonts.display, fontSize: 40, paddingVertical: 8, textAlign: 'center' },
-  bigUnit: { fontFamily: fonts.mono, fontSize: 16, color: colors.boneDim, width: 34 },
+  bigUnit: { fontFamily: fonts.label, fontSize: 16, color: colors.textDim, width: 34 },
   error: { color: colors.bloodBright, fontFamily: fonts.body, fontSize: 13, marginTop: 12 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
   back: { borderRadius: 10, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.lineStrong },
-  backText: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.boneDim },
-  save: { backgroundColor: colors.brass, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+  backText: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.textDim },
+  save: { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
   saveText: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.bg },
 });

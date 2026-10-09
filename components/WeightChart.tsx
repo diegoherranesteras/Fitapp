@@ -54,7 +54,7 @@ export default function WeightChart({ logs, width, height, unit = 'kg' }: Props)
 
 const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontFamily: fonts.body, fontSize: 13, color: colors.boneFaint, textAlign: 'center', paddingHorizontal: 20 },
+  emptyText: { fontFamily: fonts.body, fontSize: 13, color: colors.textFaint, textAlign: 'center', paddingHorizontal: 20 },
   legendRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  legendText: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint },
+  legendText: { fontFamily: fonts.label, fontSize: 11, color: colors.textFaint },
 });

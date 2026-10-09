@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.lineStrong,
   },
-  chipSelected: { backgroundColor: colors.brass, borderColor: colors.brass },
-  text: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.boneDim },
+  chipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
+  text: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.textDim },
   textSelected: { color: colors.bg },
 });

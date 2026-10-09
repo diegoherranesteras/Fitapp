@@ -165,9 +165,9 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
             </View>
 
             <Text style={styles.label}>Título</Text>
-            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder={category === 'meal' ? 'Comida' : category === 'train' ? 'Gym · Pierna' : 'Clase'} placeholderTextColor={colors.boneFaint} />
+            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder={category === 'meal' ? 'Comida' : category === 'train' ? 'Gym · Pierna' : 'Clase'} placeholderTextColor={colors.textFaint} />
             <Text style={styles.label}>Detalle (opcional)</Text>
-            <TextInput style={styles.input} value={subtitle} onChangeText={setSubtitle} placeholder={category === 'meal' ? 'arroz + pollo' : '60 min'} placeholderTextColor={colors.boneFaint} />
+            <TextInput style={styles.input} value={subtitle} onChangeText={setSubtitle} placeholder={category === 'meal' ? 'arroz + pollo' : '60 min'} placeholderTextColor={colors.textFaint} />
 
             {category === 'train' ? (
               <>
@@ -192,7 +192,7 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
                         <Text style={styles.stepperUnit}>series</Text>
                       </View>
                       <View style={styles.repsWrap}>
-                        <TextInput style={[styles.input, styles.repsInput]} value={e.reps} onChangeText={(reps) => updateExercise(i, { reps })} placeholder="8-10" placeholderTextColor={colors.boneFaint} />
+                        <TextInput style={[styles.input, styles.repsInput]} value={e.reps} onChangeText={(reps) => updateExercise(i, { reps })} placeholder="8-10" placeholderTextColor={colors.textFaint} />
                         <Text style={styles.stepperUnit}>reps</Text>
                       </View>
                     </View>
@@ -209,8 +209,8 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
                 <Text style={styles.section}>Alimentos</Text>
                 {meals.map((m, i) => (
                   <View key={`${m.id ?? 'new'}-${i}`} style={styles.mealRow}>
-                    <TextInput style={[styles.input, { flex: 2 }]} value={m.name} onChangeText={(name) => setMeals((list) => list.map((x, j) => (j === i ? { ...x, name } : x)))} placeholder="Alimento" placeholderTextColor={colors.boneFaint} />
-                    <TextInput style={[styles.input, { flex: 1 }]} value={m.quantity} onChangeText={(quantity) => setMeals((list) => list.map((x, j) => (j === i ? { ...x, quantity } : x)))} placeholder="150 g" placeholderTextColor={colors.boneFaint} />
+                    <TextInput style={[styles.input, { flex: 2 }]} value={m.name} onChangeText={(name) => setMeals((list) => list.map((x, j) => (j === i ? { ...x, name } : x)))} placeholder="Alimento" placeholderTextColor={colors.textFaint} />
+                    <TextInput style={[styles.input, { flex: 1 }]} value={m.quantity} onChangeText={(quantity) => setMeals((list) => list.map((x, j) => (j === i ? { ...x, quantity } : x)))} placeholder="150 g" placeholderTextColor={colors.textFaint} />
                     <IconButton label="✕" danger onPress={() => setMeals((list) => list.filter((_, j) => j !== i))} />
                   </View>
                 ))}
@@ -226,7 +226,7 @@ export default function BlockEditor({ visible, onClose, onSaved, block, dayId, d
           <View style={styles.footer}>
             {block ? (
               <PressableScale wrapperStyle={{ flex: 1 }} style={[styles.delete, confirmDelete && styles.deleteConfirm]} onPress={remove} disabled={busy}>
-                <Text style={[styles.deleteText, confirmDelete && { color: colors.bone }]}>{confirmDelete ? '¿Seguro? Pulsa otra vez' : 'Borrar'}</Text>
+                <Text style={[styles.deleteText, confirmDelete && { color: colors.text }]}>{confirmDelete ? '¿Seguro? Pulsa otra vez' : 'Borrar'}</Text>
               </PressableScale>
             ) : null}
             <PressableScale wrapperStyle={{ flex: 2 }} style={styles.save} onPress={save} disabled={busy}>
@@ -278,7 +278,7 @@ function ExercisePicker({ onBack, onPick, replacing }: { onBack: () => void; onP
       <Text style={sheetText.title}>{replacing ? 'Cambiar ejercicio' : 'Añadir ejercicio'}</Text>
       {replacing ? <Text style={sheetText.subtitle}>En lugar de {replacing}</Text> : null}
 
-      <TextInput style={[styles.input, { marginTop: 14 }]} value={query} onChangeText={setQuery} placeholder="Buscar: press, remo, sentadilla…" placeholderTextColor={colors.boneFaint} autoFocus />
+      <TextInput style={[styles.input, { marginTop: 14 }]} value={query} onChangeText={setQuery} placeholder="Buscar: press, remo, sentadilla…" placeholderTextColor={colors.textFaint} autoFocus />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupStrip} contentContainerStyle={{ gap: 6, paddingRight: 8 }}>
         <Chip label="Todos" selected={!group} onPress={() => setGroup(null)} />
         {MUSCLE_GROUPS.map((g) => <Chip key={g} label={g} selected={group === g} onPress={() => setGroup(group === g ? null : g)} />)}
@@ -321,8 +321,8 @@ const styles = StyleSheet.create({
   body: { marginTop: 10, flexShrink: 1 },
   topRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 18 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  label: { fontFamily: fonts.mono, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', color: colors.boneFaint, marginTop: 14, marginBottom: 8 },
-  section: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.brass, marginTop: 22, marginBottom: 10 },
+  label: { fontFamily: fonts.label, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', color: colors.textFaint, marginTop: 14, marginBottom: 8 },
+  section: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 1.5, textTransform: 'uppercase', color: colors.accent, marginTop: 22, marginBottom: 10 },
   input: {
     backgroundColor: colors.surface2,
     borderWidth: 1,
@@ -330,23 +330,23 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 11,
-    color: colors.bone,
+    color: colors.text,
     fontFamily: fonts.body,
     fontSize: 15,
   },
   exCard: { backgroundColor: colors.surface2, borderRadius: 12, borderWidth: 1, borderColor: colors.line, padding: 12, marginBottom: 8, gap: 10 },
   exTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  exIndex: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint, width: 20 },
-  exName: { fontFamily: fonts.bodyBold, fontSize: 14.5, color: colors.bone },
+  exIndex: { fontFamily: fonts.label, fontSize: 11, color: colors.textFaint, width: 20 },
+  exName: { fontFamily: fonts.bodyBold, fontSize: 14.5, color: colors.text },
   exSwap: { fontFamily: fonts.body, fontSize: 11.5, color: neon.bright, marginTop: 2 },
   exControls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 14, paddingLeft: 26 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  stepperValue: { fontFamily: fonts.mono, fontSize: 16, color: colors.bone, minWidth: 22, textAlign: 'center' },
-  stepperUnit: { fontFamily: fonts.mono, fontSize: 10.5, color: colors.boneFaint, marginLeft: 2 },
+  stepperValue: { fontFamily: fonts.label, fontSize: 16, color: colors.text, minWidth: 22, textAlign: 'center' },
+  stepperUnit: { fontFamily: fonts.label, fontSize: 10.5, color: colors.textFaint, marginLeft: 2 },
   repsWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  repsInput: { width: 92, paddingVertical: 8, fontFamily: fonts.mono, fontSize: 14, textAlign: 'center', backgroundColor: colors.surface },
+  repsInput: { width: 92, paddingVertical: 8, fontFamily: fonts.label, fontSize: 14, textAlign: 'center', backgroundColor: colors.surface },
   iconButton: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
-  iconText: { color: colors.boneDim, fontSize: 15, fontFamily: fonts.bodyBold },
+  iconText: { color: colors.textDim, fontSize: 15, fontFamily: fonts.bodyBold },
   mealRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   addButton: { borderWidth: 1, borderStyle: 'dashed', borderColor: neon.soft, borderRadius: 12, paddingVertical: 13, alignItems: 'center', marginTop: 4 },
   addText: { fontFamily: fonts.bodyBold, fontSize: 14, color: neon.bright },
@@ -355,13 +355,13 @@ const styles = StyleSheet.create({
   delete: { borderRadius: 12, paddingVertical: 15, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(240,85,67,0.45)' },
   deleteConfirm: { backgroundColor: colors.blood, borderColor: colors.blood },
   deleteText: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.bloodBright },
-  save: { backgroundColor: colors.brass, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
+  save: { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
   saveText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.bg },
   backLink: { fontFamily: fonts.bodyMedium, fontSize: 14, color: neon.bright, marginBottom: 6 },
   groupStrip: { marginTop: 10, flexGrow: 0 },
   resultRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: colors.line },
-  resultName: { fontFamily: fonts.bodyMedium, fontSize: 14.5, color: colors.bone },
-  resultMeta: { fontFamily: fonts.mono, fontSize: 10.5, color: colors.boneFaint, marginTop: 2 },
+  resultName: { fontFamily: fonts.bodyMedium, fontSize: 14.5, color: colors.text },
+  resultMeta: { fontFamily: fonts.label, fontSize: 10.5, color: colors.textFaint, marginTop: 2 },
   resultPlus: { fontFamily: fonts.bodyBold, fontSize: 20, color: neon.bright, width: 28, textAlign: 'center' },
-  empty: { fontFamily: fonts.body, fontSize: 13, color: colors.boneFaint, paddingVertical: 16 },
+  empty: { fontFamily: fonts.body, fontSize: 13, color: colors.textFaint, paddingVertical: 16 },
 });

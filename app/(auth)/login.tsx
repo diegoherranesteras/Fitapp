@@ -67,7 +67,7 @@ export default function LoginScreen() {
             autoCorrect={false}
             keyboardType="email-address"
             placeholder="tu@email.com"
-            placeholderTextColor={colors.boneFaint}
+            placeholderTextColor={colors.textFaint}
           />
         </View>
 
@@ -81,7 +81,7 @@ export default function LoginScreen() {
             onChangeText={setPassword}
             secureTextEntry
             placeholder="••••••••"
-            placeholderTextColor={colors.boneFaint}
+            placeholderTextColor={colors.textFaint}
           />
         </View>
 
@@ -110,17 +110,17 @@ const styles = StyleSheet.create({
   // En el ordenador el formulario no se estira: columna estrecha y centrada.
   container: { flexGrow: 1, justifyContent: 'center', padding: 28, width: '100%', maxWidth: 440, alignSelf: 'center' },
   eyebrow: {
-    fontFamily: fonts.mono,
+    fontFamily: fonts.label,
     fontSize: 12,
     letterSpacing: 4,
     textTransform: 'uppercase',
-    color: colors.brass,
+    color: colors.accent,
     marginBottom: 8,
   },
   title: {
     fontFamily: fonts.display,
     fontSize: 40,
-    color: colors.bone,
+    color: colors.text,
     textTransform: 'uppercase',
   },
   titleLine: { height: 2, width: 96, borderRadius: 1, backgroundColor: neon.line, marginTop: 8, marginBottom: 32, ...glow(10, 0.9) },
@@ -130,11 +130,11 @@ const styles = StyleSheet.create({
   inputFocused: { borderColor: neon.line, ...glow(10, 0.4) },
   field: { marginBottom: 18 },
   label: {
-    fontFamily: fonts.mono,
+    fontFamily: fonts.label,
     fontSize: 11,
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: colors.boneDim,
+    color: colors.textDim,
     marginBottom: 6,
   },
   input: {
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: colors.bone,
+    color: colors.text,
     fontFamily: fonts.body,
     fontSize: 16,
   },
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   button: {
-    backgroundColor: colors.brass,
+    backgroundColor: colors.accent,
     borderRadius: 10,
     paddingVertical: 15,
     alignItems: 'center',
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   switchText: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.boneDim,
+    color: colors.textDim,
     textAlign: 'center',
     marginTop: 20,
   },

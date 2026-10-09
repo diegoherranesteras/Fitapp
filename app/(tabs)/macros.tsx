@@ -95,7 +95,7 @@ export default function MacrosScreen() {
     return (
       <Screen>
         <View style={[styles.flex, styles.center]}>
-          <ActivityIndicator color={colors.brass} />
+          <ActivityIndicator color={colors.accent} />
         </View>
       </Screen>
     );
@@ -179,7 +179,7 @@ export default function MacrosScreen() {
                   </Text>
                 </View>
                 <Pressable onPress={() => deleteLog(l.id)} hitSlop={8} style={[styles.logDelete, confirmId === l.id && styles.logDeleteArmed]} accessibilityLabel={`Borrar ${l.name}`}>
-                  <Text style={[styles.logDeleteText, confirmId === l.id && { color: colors.bone }]}>{confirmId === l.id ? 'Borrar' : '✕'}</Text>
+                  <Text style={[styles.logDeleteText, confirmId === l.id && { color: colors.text }]}>{confirmId === l.id ? 'Borrar' : '✕'}</Text>
                 </Pressable>
               </View>
             ))
@@ -204,28 +204,28 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   dateStrip: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 12 },
   dateItem: { alignItems: 'center', gap: 6 },
-  dateDow: { fontFamily: fonts.mono, fontSize: 10, color: colors.boneFaint },
+  dateDow: { fontFamily: fonts.label, fontSize: 10, color: colors.textFaint },
   dateCircle: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.line },
   dateCircleActive: { backgroundColor: colors.surface2, borderColor: neon.line, ...glow(10, 0.55) },
-  dateNum: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.boneDim },
+  dateNum: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.textDim },
   dateNumActive: { color: neon.bright },
   ringSection: { alignItems: 'center', marginTop: 26, position: 'relative' },
   fire: { fontSize: 22 },
-  ringNumber: { fontFamily: fonts.display, fontSize: 40, color: colors.bone, marginTop: 2 },
-  ringLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.boneDim, marginTop: 2 },
+  ringNumber: { fontFamily: fonts.display, fontSize: 40, color: colors.text, marginTop: 2 },
+  ringLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.textDim, marginTop: 2 },
   editButton: { position: 'absolute', top: 0, right: 24, padding: 8 },
-  editIcon: { color: colors.boneDim, fontSize: 16 },
+  editIcon: { color: colors.textDim, fontSize: 16 },
   smallRings: { flexDirection: 'row', justifyContent: 'space-evenly', marginTop: 26 },
   smallRingItem: { alignItems: 'center', gap: 8 },
-  smallRingNum: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.bone },
-  smallRingLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.boneDim },
+  smallRingNum: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.text },
+  smallRingLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.textDim },
   section: { paddingHorizontal: 18, marginTop: 30 },
   sectionTitle: {
-    fontFamily: fonts.mono,
+    fontFamily: fonts.label,
     fontSize: 11,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-    color: colors.brass,
+    color: colors.accent,
     marginBottom: 12,
   },
   microGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -238,9 +238,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 8,
   },
-  microLabel: { fontFamily: fonts.body, fontSize: 11, color: colors.boneDim },
-  microValue: { fontFamily: fonts.mono, fontSize: 13, color: colors.bone, marginTop: 2 },
-  emptyText: { fontFamily: fonts.body, fontSize: 13, color: colors.boneFaint, lineHeight: 19 },
+  microLabel: { fontFamily: fonts.body, fontSize: 11, color: colors.textDim },
+  microValue: { fontFamily: fonts.label, fontSize: 13, color: colors.text, marginTop: 2 },
+  emptyText: { fontFamily: fonts.body, fontSize: 13, color: colors.textFaint, lineHeight: 19 },
   logRow: {
     flexDirection: 'row',
     gap: 12,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   logIcon: { fontSize: 20 },
   logDelete: { minWidth: 34, height: 34, paddingHorizontal: 10, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface2 },
   logDeleteArmed: { backgroundColor: colors.blood },
-  logDeleteText: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.boneFaint },
-  logName: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.bone },
-  logMacros: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint, marginTop: 3 },
+  logDeleteText: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.textFaint },
+  logName: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.text },
+  logMacros: { fontFamily: fonts.label, fontSize: 11, color: colors.textFaint, marginTop: 3 },
 });

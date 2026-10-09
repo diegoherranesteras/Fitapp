@@ -35,13 +35,13 @@ export default function Sheet({ visible, onClose, children }: Props) {
 // Estilos compartidos por el contenido de los paneles, para que todos se lean igual. flexShrink: 0 porque,
 // cuando el contenido no cabe, lo que se encoge es el ScrollView de debajo, nunca la cabecera.
 export const sheetText = StyleSheet.create({
-  kicker: { flexShrink: 0, fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: colors.brass },
-  title: { flexShrink: 0, fontFamily: fonts.display, fontSize: 26, color: colors.bone, textTransform: 'uppercase', marginTop: 4, paddingRight: 36 },
-  subtitle: { flexShrink: 0, fontFamily: fonts.body, fontSize: 13, color: colors.boneDim, marginTop: 4 },
+  kicker: { flexShrink: 0, fontFamily: fonts.label, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: colors.accent },
+  title: { flexShrink: 0, fontFamily: fonts.display, fontSize: 26, color: colors.text, textTransform: 'uppercase', marginTop: 4, paddingRight: 36 },
+  subtitle: { flexShrink: 0, fontFamily: fonts.body, fontSize: 13, color: colors.textDim, marginTop: 4 },
 });
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(9,4,4,0.7)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.72)', justifyContent: 'flex-end' },
   overlayWide: { justifyContent: 'center', alignItems: 'center', padding: 24 },
   sheet: {
     backgroundColor: colors.surface,
@@ -74,5 +74,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface2,
     zIndex: 2,
   },
-  closeText: { color: colors.boneDim, fontSize: 14 },
+  closeText: { color: colors.textDim, fontSize: 14 },
 });

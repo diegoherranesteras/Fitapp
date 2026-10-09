@@ -39,6 +39,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonText: { color: colors.bone, fontSize: 18, fontFamily: fonts.bodyBold, marginTop: -2 },
-  value: { fontFamily: fonts.mono, fontSize: 18, color: colors.bone, minWidth: 64, textAlign: 'center' },
+  buttonText: { color: colors.text, fontSize: 18, fontFamily: fonts.bodyBold, marginTop: -2 },
+  value: { fontFamily: fonts.label, fontSize: 18, color: colors.text, minWidth: 64, textAlign: 'center' },
 });

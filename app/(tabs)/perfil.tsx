@@ -46,7 +46,7 @@ export default function PerfilScreen() {
     return (
       <Screen>
         <View style={[styles.flex, styles.center]}>
-          <ActivityIndicator color={colors.brass} />
+          <ActivityIndicator color={colors.accent} />
         </View>
       </Screen>
     );
@@ -60,7 +60,7 @@ export default function PerfilScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>Nombre</Text>
-          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Tu nombre" placeholderTextColor={colors.boneFaint} />
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Tu nombre" placeholderTextColor={colors.textFaint} />
         </View>
 
         <View style={styles.field}>
@@ -95,10 +95,10 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
-  eyebrow: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.brass },
-  email: { fontFamily: fonts.body, fontSize: 14, color: colors.boneDim, marginTop: 6, marginBottom: 24 },
+  eyebrow: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 3, textTransform: 'uppercase', color: colors.accent },
+  email: { fontFamily: fonts.body, fontSize: 14, color: colors.textDim, marginTop: 6, marginBottom: 24 },
   field: { marginBottom: 20 },
-  label: { fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: colors.boneDim, marginBottom: 6 },
+  label: { fontFamily: fonts.label, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: colors.textDim, marginBottom: 6 },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -106,17 +106,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    color: colors.bone,
+    color: colors.text,
     fontFamily: fonts.body,
     fontSize: 16,
   },
-  unitHint: { fontFamily: fonts.body, fontSize: 12, color: colors.boneFaint, marginTop: -2, marginBottom: 10 },
+  unitHint: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint, marginTop: -2, marginBottom: 10 },
   unitRow: { flexDirection: 'row', gap: 10 },
   unitButton: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
-  unitButtonActive: { backgroundColor: colors.brass, borderColor: colors.brass },
-  unitText: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.boneDim },
+  unitButtonActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  unitText: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.textDim },
   unitTextActive: { color: colors.bg },
-  saveButton: { backgroundColor: colors.brass, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
+  saveButton: { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
   saveText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.bg },
   redoButton: {
     marginTop: 28,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     ...glow(14, 0.45),
   },
   redoText: { fontFamily: fonts.bodyBold, fontSize: 15, color: neon.bright },
-  redoHint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.boneFaint, lineHeight: 18 },
+  redoHint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.textFaint, lineHeight: 18 },
   signOutButton: { marginTop: 28, alignItems: 'center' },
   signOutText: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.bloodBright },
 });

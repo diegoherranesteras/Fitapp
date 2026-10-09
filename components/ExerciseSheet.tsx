@@ -156,7 +156,7 @@ export default function ExerciseSheet({ visible, onClose, block, userId }: Props
             </View>
           ))}
 
-        {isTrain && loading ? <ActivityIndicator color={colors.brass} style={{ marginVertical: 20 }} /> : null}
+        {isTrain && loading ? <ActivityIndicator color={colors.accent} style={{ marginVertical: 20 }} /> : null}
 
         {isTrain &&
           !loading &&
@@ -182,7 +182,7 @@ export default function ExerciseSheet({ visible, onClose, block, userId }: Props
                               style={[styles.weightInput, val !== '' && styles.weightInputFilled]}
                               keyboardType="decimal-pad"
                               placeholder={last != null ? formatWeight(last, weightUnit) : '–'}
-                              placeholderTextColor={colors.boneFaint}
+                              placeholderTextColor={colors.textFaint}
                               value={val}
                               onChangeText={(text) => setInput(ex.id, ex.sets_count, i, text)}
                             />
@@ -231,15 +231,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.line,
   },
-  rowName: { flex: 1, fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.bone, paddingRight: 10 },
-  rowVal: { fontFamily: fonts.mono, fontSize: 13, color: colors.brass },
+  rowName: { flex: 1, fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.text, paddingRight: 10 },
+  rowVal: { fontFamily: fonts.label, fontSize: 13, color: colors.accent },
   exBlock: { borderTopWidth: 1, borderTopColor: colors.line, paddingVertical: 12, gap: 8 },
   exHeader: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
-  exIndex: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint },
-  note: { fontFamily: fonts.body, fontSize: 12, color: colors.boneFaint, lineHeight: 17 },
+  exIndex: { fontFamily: fonts.label, fontSize: 11, color: colors.textFaint },
+  note: { fontFamily: fonts.body, fontSize: 12, color: colors.textFaint, lineHeight: 17 },
   weightsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   setCell: { alignItems: 'center', gap: 4 },
-  setLabel: { fontFamily: fonts.mono, fontSize: 9.5, color: colors.boneFaint },
+  setLabel: { fontFamily: fonts.label, fontSize: 9.5, color: colors.textFaint },
   weightInput: {
     width: 58,
     height: 44,
@@ -248,14 +248,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: 8,
-    color: colors.bone,
-    fontFamily: fonts.mono,
+    color: colors.text,
+    fontFamily: fonts.label,
     fontSize: 14,
   },
-  weightInputFilled: { borderColor: colors.brass },
-  refText: { fontFamily: fonts.mono, fontSize: 10.5, color: colors.boneFaint },
+  weightInputFilled: { borderColor: colors.accent },
+  refText: { fontFamily: fonts.label, fontSize: 10.5, color: colors.textFaint },
   error: { fontFamily: fonts.body, fontSize: 13, color: colors.bloodBright, marginTop: 10, lineHeight: 18 },
-  saveButton: { backgroundColor: colors.brass, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 14 },
+  saveButton: { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 14 },
   saveButtonDone: { backgroundColor: colors.good },
   saveText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.bg },
 });

@@ -1,15 +1,16 @@
+// Negro de base con azules: el azul sólido (accent) para botones y selección; el neón para luz y líneas.
 export const colors = {
-  bg: '#22100F',
-  bgTop: '#2C1517',
-  surface: '#321719',
-  surface2: '#3B1C1F',
-  line: 'rgba(242,232,219,0.12)',
-  lineStrong: 'rgba(242,232,219,0.22)',
-  bone: '#F2E8DB',
-  boneDim: '#C8B6A7',
-  boneFaint: '#9B897D',
-  brass: '#CFA64E',
-  brassBright: '#E6C069',
+  bg: '#050607',
+  bgTop: '#0A0C0F',
+  surface: '#0F1216',
+  surface2: '#171B21',
+  line: 'rgba(220,230,245,0.10)',
+  lineStrong: 'rgba(220,230,245,0.20)',
+  text: '#EEF2F7',
+  textDim: '#AAB3BF',
+  textFaint: '#6F7885',
+  accent: '#3D8BFF',
+  accentBright: '#8FC2FF',
   blood: '#DA4030',
   bloodBright: '#F05543',
   protein: '#F05543',
@@ -39,18 +40,20 @@ export const fonts = {
   body: 'HankenGrotesk_400Regular',
   bodyMedium: 'HankenGrotesk_600SemiBold',
   bodyBold: 'HankenGrotesk_700Bold',
-  mono: 'SpaceMono_400Regular',
-  monoBold: 'SpaceMono_700Bold',
+  // Etiquetas en mayúsculas, horas y cifras pequeñas.
+  label: 'HankenGrotesk_600SemiBold',
+  labelBold: 'HankenGrotesk_700Bold',
 };
 
+// Un azul por día, de celeste (lunes) a violeta (sábado); el domingo, gris.
 export const dayAccents: Record<number, string> = {
-  1: '#E2B24E', // Mon
-  2: '#E2954A', // Tue
-  3: '#E07C42', // Wed
-  4: '#DA5C3E', // Thu
-  5: '#D75E66', // Fri
-  6: '#CF7280', // Sat
-  0: '#9B897D', // Sun
+  1: '#8FD3FF', // Mon
+  2: '#6CC0FF', // Tue
+  3: '#4FA9FF', // Wed
+  4: '#3D8BFF', // Thu
+  5: '#5B7CFF', // Fri
+  6: '#7B6CFF', // Sat
+  0: '#6F7885', // Sun
 };
 
 export const dayLabels: Record<number, string> = {
