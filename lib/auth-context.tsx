@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import type { OnboardingAnswers } from './types';
+import type { WeightUnit } from './units';
 
 interface AuthContextValue {
   session: Session | null;
@@ -9,6 +10,7 @@ interface AuthContextValue {
   // null mientras no se sabe (sin sesión o cargando el perfil)
   onboarded: boolean | null;
   onboardingAnswers: OnboardingAnswers | null;
+  weightUnit: WeightUnit;
   refreshProfile: () => Promise<void>;
 }
 
@@ -17,6 +19,7 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   onboarded: null,
   onboardingAnswers: null,
+  weightUnit: 'kg',
   refreshProfile: async () => {},
 });
 
@@ -25,6 +28,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(true);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [onboardingAnswers, setOnboardingAnswers] = useState<OnboardingAnswers | null>(null);
+  const [weightUnit, setWeightUnit] = useState<WeightUnit>('kg');
 
   const loadProfile = useCallback(async (s: Session | null) => {
     if (!s) {
@@ -34,11 +38,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
     const { data } = await supabase
       .from('profiles')
-      .select('onboarded_at, onboarding')
+      .select('onboarded_at, onboarding, weight_unit')
       .eq('user_id', s.user.id)
       .maybeSingle();
     setOnboarded(!!data?.onboarded_at);
     setOnboardingAnswers((data?.onboarding as OnboardingAnswers | null) ?? null);
+    setWeightUnit(data?.weight_unit === 'lb' ? 'lb' : 'kg');
   }, []);
 
   const userIdRef = useRef<string | undefined>(undefined);
@@ -66,7 +71,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const refreshProfile = useCallback(() => loadProfile(session), [loadProfile, session]);
 
   return (
-    <AuthContext.Provider value={{ session, loading, onboarded, onboardingAnswers, refreshProfile }}>
+    <AuthContext.Provider value={{ session, loading, onboarded, onboardingAnswers, weightUnit, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth-context';
 import { colors, fonts, glow, neon } from '../../lib/theme';
 import PressableScale from '../../components/PressableScale';
+import Screen from '../../components/Screen';
 
 export default function PerfilScreen() {
-  const { session } = useAuth();
+  const { session, refreshProfile } = useAuth();
   const router = useRouter();
   const [name, setName] = useState('');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lb'>('kg');
@@ -36,6 +36,7 @@ export default function PerfilScreen() {
     if (!session) return;
     setSaving(true);
     await supabase.from('profiles').upsert({ user_id: session.user.id, name, weight_unit: weightUnit }, { onConflict: 'user_id' });
+    await refreshProfile();
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
@@ -43,14 +44,16 @@ export default function PerfilScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.flex, styles.center]}>
-        <ActivityIndicator color={colors.brass} />
-      </SafeAreaView>
+      <Screen>
+        <View style={[styles.flex, styles.center]}>
+          <ActivityIndicator color={colors.brass} />
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen maxWidth={560}>
       <View style={{ padding: 22 }}>
         <Text style={styles.eyebrow}>Perfil</Text>
         <Text style={styles.email}>{session?.user.email}</Text>
@@ -62,18 +65,19 @@ export default function PerfilScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>Unidad de peso</Text>
+          <Text style={styles.unitHint}>Para tu peso corporal y los pesos de cada serie.</Text>
           <View style={styles.unitRow}>
             {(['kg', 'lb'] as const).map((u) => (
-              <Pressable key={u} onPress={() => setWeightUnit(u)} style={[styles.unitButton, weightUnit === u && styles.unitButtonActive]}>
+              <PressableScale key={u} onPress={() => setWeightUnit(u)} style={[styles.unitButton, weightUnit === u && styles.unitButtonActive]}>
                 <Text style={[styles.unitText, weightUnit === u && styles.unitTextActive]}>{u}</Text>
-              </Pressable>
+              </PressableScale>
             ))}
           </View>
         </View>
 
-        <Pressable style={styles.saveButton} onPress={save} disabled={saving}>
+        <PressableScale style={styles.saveButton} onPress={save} disabled={saving}>
           {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>{saved ? 'Guardado ✓' : 'Guardar'}</Text>}
-        </Pressable>
+        </PressableScale>
 
         <PressableScale style={styles.redoButton} onPress={() => router.push('/onboarding')}>
           <Text style={styles.redoText}>Rehacer mi plan</Text>
@@ -84,7 +88,7 @@ export default function PerfilScreen() {
           <Text style={styles.signOutText}>Cerrar sesión</Text>
         </Pressable>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -106,6 +110,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 16,
   },
+  unitHint: { fontFamily: fonts.body, fontSize: 12, color: colors.boneFaint, marginTop: -2, marginBottom: 10 },
   unitRow: { flexDirection: 'row', gap: 10 },
   unitButton: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   unitButtonActive: { backgroundColor: colors.brass, borderColor: colors.brass },

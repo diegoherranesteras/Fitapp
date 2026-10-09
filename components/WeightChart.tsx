@@ -7,9 +7,10 @@ interface Props {
   logs: WeightLog[]; // ordenados por fecha ascendente
   width: number;
   height: number;
+  unit?: string; // los pesos ya vienen convertidos a esta unidad
 }
 
-export default function WeightChart({ logs, width, height }: Props) {
+export default function WeightChart({ logs, width, height, unit = 'kg' }: Props) {
   if (logs.length === 0) {
     return (
       <View style={[styles.empty, { width, height }]}>
@@ -44,8 +45,8 @@ export default function WeightChart({ logs, width, height }: Props) {
         ))}
       </Svg>
       <View style={styles.legendRow}>
-        <Text style={styles.legendText}>{min.toFixed(1)} kg</Text>
-        <Text style={styles.legendText}>{max.toFixed(1)} kg</Text>
+        <Text style={styles.legendText}>{min.toFixed(1)} {unit}</Text>
+        <Text style={styles.legendText}>{max.toFixed(1)} {unit}</Text>
       </View>
     </View>
   );
