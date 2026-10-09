@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Modal, View, Text, Pressable, TextInput, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, TextInput, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { colors, fonts } from '../lib/theme';
 import type { MacroReference, MacroTargets } from '../lib/types';
+import Sheet, { sheetText } from './Sheet';
+import PressableScale from './PressableScale';
 
 interface Props {
   visible: boolean;
@@ -60,14 +62,11 @@ export default function EditMacrosModal({ visible, onClose, userId, current, ref
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
-          <Text style={styles.title}>Editar objetivos</Text>
+    <Sheet visible={visible} onClose={onClose}>
+          <Text style={sheetText.kicker}>Macros</Text>
+          <Text style={[sheetText.title, { marginBottom: 14 }]}>Tus objetivos</Text>
 
-          <ScrollView style={{ maxHeight: 460 }}>
+          <ScrollView style={{ flexShrink: 1 }}>
             {reference ? (
               <View style={styles.whyBox}>
                 <Text style={styles.whyTitle}>Recomendación para tu objetivo</Text>
@@ -113,20 +112,14 @@ export default function EditMacrosModal({ visible, onClose, userId, current, ref
             </Pressable>
           ) : null}
 
-          <Pressable style={styles.saveButton} onPress={save} disabled={saving}>
+          <PressableScale style={styles.saveButton} onPress={save} disabled={saving}>
             {saving ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>Guardar</Text>}
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
+          </PressableScale>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(9,4,4,0.68)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 22, paddingBottom: 34 },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.lineStrong, alignSelf: 'center', marginBottom: 16 },
-  title: { fontFamily: fonts.display, fontSize: 22, color: colors.bone, textTransform: 'uppercase', marginBottom: 14 },
   whyBox: {
     backgroundColor: colors.surface2,
     borderLeftWidth: 3,

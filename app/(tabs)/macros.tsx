@@ -1,13 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth-context';
+import { onDataChanged } from '../../lib/events';
 import { colors, fonts, glow, neon } from '../../lib/theme';
 import type { FoodLog, MacroReference, MacroTargets } from '../../lib/types';
 import RingProgress from '../../components/RingProgress';
 import EditMacrosModal from '../../components/EditMacrosModal';
+import Screen from '../../components/Screen';
 
 function last7Dates() {
   const out: { iso: string; label: string; dow: string }[] = [];
@@ -39,6 +40,7 @@ export default function MacrosScreen() {
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -64,6 +66,15 @@ export default function MacrosScreen() {
       load();
     }, [load])
   );
+  useEffect(() => onDataChanged(load), [load]);
+
+  // Borrar pide dos pulsaciones: la primera arma el botón, la segunda borra. Sin diálogos que bloqueen.
+  async function deleteLog(id: string) {
+    if (confirmId !== id) return setConfirmId(id);
+    setConfirmId(null);
+    setLogs((list) => list.filter((l) => l.id !== id));
+    await supabase.from('food_logs').delete().eq('id', id);
+  }
 
   const consumed = logs.reduce(
     (acc, l) => ({
@@ -82,14 +93,16 @@ export default function MacrosScreen() {
 
   if (loading && !targets) {
     return (
-      <SafeAreaView style={[styles.flex, styles.center]}>
-        <ActivityIndicator color={colors.brass} />
-      </SafeAreaView>
+      <Screen>
+        <View style={[styles.flex, styles.center]}>
+          <ActivityIndicator color={colors.brass} />
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.flex} edges={['top']}>
+    <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <View style={styles.dateStrip}>
           {dates.map((d) => {
@@ -152,7 +165,7 @@ export default function MacrosScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recently Logged</Text>
+          <Text style={styles.sectionTitle}>Registrado este día</Text>
           {logs.length === 0 ? (
             <Text style={styles.emptyText}>Nada registrado este día todavía. Usa el botón + para añadir comida.</Text>
           ) : (
@@ -165,6 +178,9 @@ export default function MacrosScreen() {
                     🔥 {l.calories} kcal · {l.protein_g}g P · {l.carbs_g}g C · {l.fat_g}g G
                   </Text>
                 </View>
+                <Pressable onPress={() => deleteLog(l.id)} hitSlop={8} style={[styles.logDelete, confirmId === l.id && styles.logDeleteArmed]} accessibilityLabel={`Borrar ${l.name}`}>
+                  <Text style={[styles.logDeleteText, confirmId === l.id && { color: colors.bone }]}>{confirmId === l.id ? 'Borrar' : '✕'}</Text>
+                </Pressable>
               </View>
             ))
           )}
@@ -179,7 +195,7 @@ export default function MacrosScreen() {
         reference={reference}
         onSaved={setTargets}
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
 
@@ -235,6 +251,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logIcon: { fontSize: 20 },
+  logDelete: { minWidth: 34, height: 34, paddingHorizontal: 10, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface2 },
+  logDeleteArmed: { backgroundColor: colors.blood },
+  logDeleteText: { fontFamily: fonts.bodyBold, fontSize: 12.5, color: colors.boneFaint },
   logName: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.bone },
   logMacros: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint, marginTop: 3 },
 });

@@ -1,7 +1,12 @@
 import { useState } from 'react';
-import { Modal, View, Text, Pressable, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { colors, fonts } from '../lib/theme';
+import { useAuth } from '../lib/auth-context';
+import { emitDataChanged } from '../lib/events';
+import { parseWeight } from '../lib/units';
+import { colors, fonts, neon } from '../lib/theme';
+import Sheet, { sheetText } from './Sheet';
+import PressableScale from './PressableScale';
 
 interface Props {
   visible: boolean;
@@ -16,37 +21,36 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+const MACRO_FIELDS = [
+  { key: 'calories', label: 'Calorías', unit: 'kcal', color: neon.bright },
+  { key: 'protein', label: 'Proteína', unit: 'g', color: colors.protein },
+  { key: 'carbs', label: 'Carbos', unit: 'g', color: colors.carbs },
+  { key: 'fat', label: 'Grasas', unit: 'g', color: colors.fat },
+] as const;
+type MacroKey = (typeof MACRO_FIELDS)[number]['key'];
+
 export default function QuickAddSheet({ visible, onClose, userId }: Props) {
+  const { weightUnit } = useAuth();
   const [step, setStep] = useState<Step>('menu');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [foodName, setFoodName] = useState('');
-  const [calories, setCalories] = useState('');
-  const [protein, setProtein] = useState('');
-  const [carbs, setCarbs] = useState('');
-  const [fat, setFat] = useState('');
-
+  const [macros, setMacros] = useState<Record<MacroKey, string>>({ calories: '', protein: '', carbs: '', fat: '' });
   const [weight, setWeight] = useState('');
 
-  function reset() {
+  function close() {
     setStep('menu');
     setError(null);
     setFoodName('');
-    setCalories('');
-    setProtein('');
-    setCarbs('');
-    setFat('');
+    setMacros({ calories: '', protein: '', carbs: '', fat: '' });
     setWeight('');
-  }
-
-  function close() {
-    reset();
     onClose();
   }
 
+  const n = (s: string) => Number(s.replace(',', '.')) || 0;
+
   async function saveFood() {
-    if (!foodName.trim() || !calories) {
+    if (!foodName.trim() || !macros.calories) {
       setError('Pon al menos nombre y calorías.');
       return;
     }
@@ -56,18 +60,20 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
       user_id: userId,
       date: todayISO(),
       name: foodName.trim(),
-      calories: Number(calories) || 0,
-      protein_g: Number(protein) || 0,
-      carbs_g: Number(carbs) || 0,
-      fat_g: Number(fat) || 0,
+      calories: Math.round(n(macros.calories)),
+      protein_g: n(macros.protein),
+      carbs_g: n(macros.carbs),
+      fat_g: n(macros.fat),
     });
     setBusy(false);
-    if (err) setError(err.message);
-    else close();
+    if (err) return setError(err.message);
+    emitDataChanged();
+    close();
   }
 
   async function saveWeight() {
-    if (!weight) {
+    const kg = parseWeight(weight, weightUnit);
+    if (kg == null) {
       setError('Pon tu peso.');
       return;
     }
@@ -75,145 +81,125 @@ export default function QuickAddSheet({ visible, onClose, userId }: Props) {
     setError(null);
     const { error: err } = await supabase
       .from('weight_logs')
-      .upsert({ user_id: userId, date: todayISO(), weight_kg: Number(weight) }, { onConflict: 'user_id,date' });
+      .upsert({ user_id: userId, date: todayISO(), weight_kg: kg }, { onConflict: 'user_id,date' });
     setBusy(false);
-    if (err) setError(err.message);
-    else close();
+    if (err) return setError(err.message);
+    emitDataChanged();
+    close();
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} />
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
+    <Sheet visible={visible} onClose={close}>
+      {step === 'menu' && (
+        <>
+          <Text style={sheetText.kicker}>Hoy</Text>
+          <Text style={[sheetText.title, { marginBottom: 16 }]}>Registrar</Text>
+          <Option icon="🍽️" title="Comida" hint="Lo que has comido fuera del plan o tal cual" onPress={() => setStep('food')} />
+          <Option icon="⚖️" title="Peso" hint="Mejor en ayunas, después del baño" onPress={() => setStep('weight')} />
+        </>
+      )}
 
-          {step === 'menu' && (
-            <>
-              <Text style={styles.title}>Registrar</Text>
-              <Pressable style={styles.optionButton} onPress={() => setStep('food')}>
-                <Text style={styles.optionIcon}>🍽️</Text>
-                <Text style={styles.optionText}>Registrar comida</Text>
-              </Pressable>
-              <Pressable style={styles.optionButton} onPress={() => setStep('weight')}>
-                <Text style={styles.optionIcon}>⚖️</Text>
-                <Text style={styles.optionText}>Registrar peso</Text>
-              </Pressable>
-            </>
-          )}
-
-          {step === 'food' && (
-            <>
-              <Text style={styles.title}>Registrar comida</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Nombre (ej. Pechuga con arroz)"
-                placeholderTextColor={colors.boneFaint}
-                value={foodName}
-                onChangeText={setFoodName}
-              />
-              <View style={styles.row}>
-                <TextInput
-                  style={[styles.input, styles.inputSmall]}
-                  placeholder="kcal"
-                  placeholderTextColor={colors.boneFaint}
-                  keyboardType="numeric"
-                  value={calories}
-                  onChangeText={setCalories}
-                />
-                <TextInput
-                  style={[styles.input, styles.inputSmall]}
-                  placeholder="prot g"
-                  placeholderTextColor={colors.boneFaint}
-                  keyboardType="numeric"
-                  value={protein}
-                  onChangeText={setProtein}
-                />
+      {step === 'food' && (
+        <>
+          <Text style={sheetText.kicker}>Registrar</Text>
+          <Text style={[sheetText.title, { marginBottom: 16 }]}>Comida</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Nombre (ej. Pechuga con arroz)"
+            placeholderTextColor={colors.boneFaint}
+            value={foodName}
+            onChangeText={setFoodName}
+            autoFocus
+          />
+          <View style={styles.grid}>
+            {MACRO_FIELDS.map((f) => (
+              <View key={f.key} style={styles.gridItem}>
+                <Text style={[styles.fieldLabel, { color: f.color }]}>{f.label}</Text>
+                <View style={styles.fieldRow}>
+                  <TextInput
+                    style={[styles.input, styles.inputNumber]}
+                    placeholder="0"
+                    placeholderTextColor={colors.boneFaint}
+                    keyboardType="decimal-pad"
+                    value={macros[f.key]}
+                    onChangeText={(v) => setMacros((m) => ({ ...m, [f.key]: v }))}
+                  />
+                  <Text style={styles.unit}>{f.unit}</Text>
+                </View>
               </View>
-              <View style={styles.row}>
-                <TextInput
-                  style={[styles.input, styles.inputSmall]}
-                  placeholder="carbs g"
-                  placeholderTextColor={colors.boneFaint}
-                  keyboardType="numeric"
-                  value={carbs}
-                  onChangeText={setCarbs}
-                />
-                <TextInput
-                  style={[styles.input, styles.inputSmall]}
-                  placeholder="grasa g"
-                  placeholderTextColor={colors.boneFaint}
-                  keyboardType="numeric"
-                  value={fat}
-                  onChangeText={setFat}
-                />
-              </View>
-              {error ? <Text style={styles.error}>{error}</Text> : null}
-              <Pressable style={styles.saveButton} onPress={saveFood} disabled={busy}>
-                {busy ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>Guardar</Text>}
-              </Pressable>
-            </>
-          )}
+            ))}
+          </View>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <Actions busy={busy} onBack={() => { setError(null); setStep('menu'); }} onSave={saveFood} />
+        </>
+      )}
 
-          {step === 'weight' && (
-            <>
-              <Text style={styles.title}>Registrar peso</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Peso en kg"
-                placeholderTextColor={colors.boneFaint}
-                keyboardType="numeric"
-                value={weight}
-                onChangeText={setWeight}
-              />
-              {error ? <Text style={styles.error}>{error}</Text> : null}
-              <Pressable style={styles.saveButton} onPress={saveWeight} disabled={busy}>
-                {busy ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>Guardar</Text>}
-              </Pressable>
-            </>
-          )}
-        </View>
+      {step === 'weight' && (
+        <>
+          <Text style={sheetText.kicker}>Registrar</Text>
+          <Text style={[sheetText.title, { marginBottom: 16 }]}>Peso de hoy</Text>
+          <View style={styles.fieldRow}>
+            <TextInput
+              style={[styles.input, styles.bigInput]}
+              placeholder="0,0"
+              placeholderTextColor={colors.boneFaint}
+              keyboardType="decimal-pad"
+              value={weight}
+              onChangeText={setWeight}
+              autoFocus
+            />
+            <Text style={styles.bigUnit}>{weightUnit}</Text>
+          </View>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          <Actions busy={busy} onBack={() => { setError(null); setStep('menu'); }} onSave={saveWeight} />
+        </>
+      )}
+    </Sheet>
+  );
+}
+
+function Option({ icon, title, hint, onPress }: { icon: string; title: string; hint: string; onPress: () => void }) {
+  return (
+    <PressableScale style={styles.option} onPress={onPress}>
+      <Text style={styles.optionIcon}>{icon}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.optionTitle}>{title}</Text>
+        <Text style={styles.optionHint}>{hint}</Text>
       </View>
-    </Modal>
+      <Text style={styles.chevron}>›</Text>
+    </PressableScale>
+  );
+}
+
+function Actions({ busy, onBack, onSave }: { busy: boolean; onBack: () => void; onSave: () => void }) {
+  return (
+    <View style={styles.actions}>
+      <PressableScale wrapperStyle={{ flex: 1 }} style={styles.back} onPress={onBack} disabled={busy}>
+        <Text style={styles.backText}>Atrás</Text>
+      </PressableScale>
+      <PressableScale wrapperStyle={{ flex: 2 }} style={styles.save} onPress={onSave} disabled={busy}>
+        {busy ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.saveText}>Guardar</Text>}
+      </PressableScale>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(9,4,4,0.68)', justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 22,
-    paddingBottom: 36,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.lineStrong,
-    alignSelf: 'center',
-    marginBottom: 18,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    color: colors.bone,
-    textTransform: 'uppercase',
-    marginBottom: 16,
-  },
-  optionButton: {
+  option: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
     backgroundColor: colors.surface2,
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 14,
+    padding: 16,
     marginBottom: 10,
   },
-  optionIcon: { fontSize: 22 },
-  optionText: { fontFamily: fonts.bodyMedium, fontSize: 16, color: colors.bone },
+  optionIcon: { fontSize: 24 },
+  optionTitle: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.bone },
+  optionHint: { fontFamily: fonts.body, fontSize: 12.5, color: colors.boneFaint, marginTop: 2 },
+  chevron: { color: colors.boneFaint, fontSize: 22 },
   input: {
     backgroundColor: colors.surface2,
     borderWidth: 1,
@@ -224,17 +210,19 @@ const styles = StyleSheet.create({
     color: colors.bone,
     fontFamily: fonts.body,
     fontSize: 16,
-    marginBottom: 10,
   },
-  row: { flexDirection: 'row', gap: 10 },
-  inputSmall: { flex: 1 },
-  error: { color: colors.bloodBright, fontFamily: fonts.body, fontSize: 13, marginBottom: 10 },
-  saveButton: {
-    backgroundColor: colors.brass,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 6,
-  },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 14 },
+  gridItem: { flexBasis: '47%', flexGrow: 1 },
+  fieldLabel: { fontFamily: fonts.mono, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 },
+  fieldRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  inputNumber: { flex: 1, minWidth: 0, fontFamily: fonts.mono },
+  unit: { fontFamily: fonts.mono, fontSize: 11, color: colors.boneFaint, width: 28 },
+  bigInput: { flex: 1, fontFamily: fonts.display, fontSize: 40, paddingVertical: 8, textAlign: 'center' },
+  bigUnit: { fontFamily: fonts.mono, fontSize: 16, color: colors.boneDim, width: 34 },
+  error: { color: colors.bloodBright, fontFamily: fonts.body, fontSize: 13, marginTop: 12 },
+  actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  back: { borderRadius: 10, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.lineStrong },
+  backText: { fontFamily: fonts.bodyMedium, fontSize: 15, color: colors.boneDim },
+  save: { backgroundColor: colors.brass, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
   saveText: { fontFamily: fonts.bodyBold, fontSize: 16, color: colors.bg },
 });

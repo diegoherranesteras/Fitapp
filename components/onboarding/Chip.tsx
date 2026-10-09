@@ -28,9 +28,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: colors.surface,
+    // surface2 y no surface: los chips suelen ir dentro de tarjetas surface y ahí desaparecían.
+    backgroundColor: colors.surface2,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: colors.lineStrong,
   },
   chipSelected: { backgroundColor: colors.brass, borderColor: colors.brass },
   text: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.boneDim },

@@ -107,7 +107,8 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
-  container: { flexGrow: 1, justifyContent: 'center', padding: 28 },
+  // En el ordenador el formulario no se estira: columna estrecha y centrada.
+  container: { flexGrow: 1, justifyContent: 'center', padding: 28, width: '100%', maxWidth: 440, alignSelf: 'center' },
   eyebrow: {
     fontFamily: fonts.mono,
     fontSize: 12,
